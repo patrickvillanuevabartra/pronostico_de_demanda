@@ -128,26 +128,57 @@ svg text{fill:var(--muted);font-family:var(--sans);font-size:11.5px}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation-duration:2s}.drop{transition:none}}
 footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
+
+.helpbtn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-left:6px;border-radius:50%;border:1.5px solid var(--primary);background:transparent;color:var(--primary);font:600 11px/1 var(--sans);cursor:pointer;vertical-align:middle;padding:0}
+.helpbtn:hover,.helpbtn[aria-expanded="true"]{background:var(--primary);color:var(--primary-ink)}
+.helppanel{margin:12px 0;padding:14px 16px;border:1px solid var(--primary);border-left-width:5px;border-radius:8px;background:var(--primary-soft);font-size:14px}
+.helppanel p{margin:6px 0;max-width:80ch}
+.helppanel .hp-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.helppanel .hp-x{background:none;border:0;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);padding:2px 6px}
+.helppanel .hp-ex{background:var(--surface);border-radius:6px;padding:8px 10px}
+.alert{margin-top:10px;padding:12px 14px;border:1px solid var(--line);border-left:5px solid var(--primary);border-radius:8px;background:var(--surface);font-size:14px}
+.alert.warn{border-left-color:var(--warn)}.alert.err{border-left-color:var(--bad)}.alert.ok{border-left-color:var(--good)}
+.alert .al-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.alert p{margin:6px 0 0;max-width:84ch}
+.alert .al-ex{color:var(--muted)}
+.alert .al-do{padding-top:2px}
+.alsum{font-weight:600;margin:14px 0 0}
+.gl{border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-top:8px}
+.gl>summary{cursor:pointer;padding:10px 14px;font-weight:600}
+.gl>div{padding:0 14px 12px}.gl p{margin:6px 0;max-width:80ch}
+.route{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+@media(max-width:860px){.route{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.route{grid-template-columns:1fr}}
+.route div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.route b{display:block;margin-bottom:2px}
+.route i{display:block;color:var(--muted);font-style:normal;margin-top:4px}
 </style>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <div class="brand">Simulador de pronósticos<small>Taller de proyecto</small></div>
-  <nav class="nav"><a href="#datos">Datos</a><a href="#config">Configuración</a><a href="#resultados">Resultados</a><a href="#metodo">Método</a></nav>
+  <nav class="nav"><a href="#datos">Datos</a><a href="#config">Configuración</a><a href="#resultados">Resultados</a><a href="#metodo">Guía</a></nav>
 </div></header>
 
 <main class="wrap">
 <div class="hero">
   <h1>Cargue la demanda proyectada y deje que los modelos compitan</h1>
   <p>El sistema ajusta los modelos de la plantilla de pronósticos (promedio, promedio móvil, tendencia, suavización exponencial, Holt, tendencia con estacionalidad y Winters) más la tasa media de crecimiento, optimiza sus parámetros como lo haría el Solver, los compara con los mismos datos y redacta la justificación del método elegido.</p>
+  <div class="route" aria-label="Ruta rápida">
+    <div><b>1. Cargue</b>Su demanda proyectada, un valor por período.<i>Ej.: 36 meses de ventas estimadas del proyecto.</i></div>
+    <div><b>2. Configure</b>Ciclo, validación y horizonte. Lea las alertas.<i>Ej.: ciclo 12, validar 12, pronosticar 12.</i></div>
+    <div><b>3. Simule</b>Compare los modelos y revise sus alertas.<i>Ej.: gana Winters con MAD 2 200.</i></div>
+    <div><b>4. Entregue</b>Descargue el Excel y envíe el resultado.<i>Ej.: agregue sus observaciones antes.</i></div>
+  </div>
 </div>
 
 <section class="step" id="datos">
-  <div class="step-h"><span class="n">1</span><h2>Cargar la demanda del proyecto</h2></div>
+  <div class="step-h"><span class="n">1</span><h2>Cargar la demanda del proyecto</h2><button type="button" class="helpbtn" data-help="datos" data-panel="hp-datos" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></div>
+  <div class="helppanel hidden" id="hp-datos" role="region" aria-live="polite"></div>
   <div class="grid2">
     <div class="card">
       <div class="row" style="margin-bottom:14px">
-        <div><label class="f" for="grp">Grupo</label><input type="text" id="grp" placeholder="Ej.: Grupo 3"></div>
+        <div><label class="f" for="grp">Grupo<button type="button" class="helpbtn" data-help="grupo" data-panel="hp-datos" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label><input type="text" id="grp" placeholder="Ej.: Grupo 3"></div>
         <div><label class="f" for="prj">Proyecto</label><input type="text" id="prj" placeholder="Nombre del proyecto"></div>
       </div>
       <div class="drop" id="drop" tabindex="0" role="button" aria-label="Seleccionar archivo de datos">
@@ -159,6 +190,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
         <button class="linkbtn" id="btnSample">Probar con los datos de la plantilla</button>
         <button class="linkbtn" id="btnTpl">Descargar formato de carga</button>
         <button class="linkbtn" id="btnPasteToggle">Pegar desde Excel</button>
+        <button class="linkbtn" data-help="archivo" data-panel="hp-datos">¿Cómo debe ser mi archivo?</button>
       </div>
       <div id="pasteBox" class="hidden" style="margin-top:12px">
         <label class="f" for="paste">Pegue las columnas (período y demanda, o solo demanda)</label>
@@ -167,7 +199,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
       </div>
       <div id="mapBox" class="hidden row" style="margin-top:14px">
         <div id="sheetWrap"><label class="f" for="selSheet">Hoja</label><select id="selSheet"></select></div>
-        <div><label class="f" for="selDem">Columna de demanda</label><select id="selDem"></select></div>
+        <div><label class="f" for="selDem">Columna de demanda<button type="button" class="helpbtn" data-help="columnas" data-panel="hp-datos" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label><select id="selDem"></select></div>
         <div><label class="f" for="selLab">Columna de período</label><select id="selLab"></select></div>
       </div>
       <div id="dataMsg"></div>
@@ -187,22 +219,24 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
   <div class="step-h"><span class="n">2</span><h2>Definir la simulación</h2></div>
   <div class="card">
     <div class="row">
-      <div><label class="f" for="cycle">Ciclo estacional</label>
+      <div><label class="f" for="cycle">Ciclo estacional<button type="button" class="helpbtn" data-help="ciclo" data-panel="hp-config" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label>
         <select id="cycle"><option value="12">Mensual (12 períodos)</option><option value="4">Trimestral (4)</option><option value="6">Bimestral (6)</option><option value="52">Semanal, ciclo anual (52)</option><option value="7">Diario, ciclo semanal (7)</option><option value="1">Sin estacionalidad</option><option value="0">Otro…</option></select>
         <input type="number" id="cycleN" min="2" max="60" value="12" class="hidden" style="margin-top:6px" aria-label="Largo del ciclo"></div>
-      <div><label class="f" for="hold">Períodos de validación</label><input type="number" id="hold" min="0" value="12"></div>
-      <div><label class="f" for="hor">Períodos a pronosticar</label><input type="number" id="hor" min="1" max="60" value="12"></div>
-      <div><label class="f" for="crit">Criterio de decisión</label>
+      <div><label class="f" for="hold">Períodos de validación<button type="button" class="helpbtn" data-help="validacion" data-panel="hp-config" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label><input type="number" id="hold" min="0" value="12"></div>
+      <div><label class="f" for="hor">Períodos a pronosticar<button type="button" class="helpbtn" data-help="horizonte" data-panel="hp-config" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label><input type="number" id="hor" min="1" max="60" value="12"></div>
+      <div><label class="f" for="crit">Criterio de decisión<button type="button" class="helpbtn" data-help="criterio" data-panel="hp-config" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label>
         <select id="crit"><option value="mad">MAD (error absoluto medio)</option><option value="rmse">RMSE (penaliza errores grandes)</option><option value="mape">MAPE (error porcentual)</option></select></div>
     </div>
-    <div class="chk"><input type="checkbox" id="pars" checked><label for="pars"><b>Preferir el modelo más simple si empata.</b> <span class="muted">Si otro modelo con menos parámetros queda a menos de 5 % del mejor error, se elige ese.</span></label></div>
+    <div class="helppanel hidden" id="hp-config" role="region" aria-live="polite"></div>
+    <div class="chk"><input type="checkbox" id="pars" checked><label for="pars"><b>Preferir el modelo más simple si empata.</b> <span class="muted">Si otro modelo con menos parámetros queda a menos de 5 % del mejor error, se elige ese.</span></label><button type="button" class="helpbtn" data-help="pars" data-panel="hp-config" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></div>
     <details class="adv">
       <summary>Opciones avanzadas</summary>
+      <div class="helppanel hidden" id="hp-adv" role="region" aria-live="polite"></div>
       <div class="row" style="margin-top:12px">
-        <div><label class="f" for="variant">Actualización estacional de Winters</label>
+        <div><label class="f" for="variant">Actualización estacional de Winters<button type="button" class="helpbtn" data-help="variant" data-panel="hp-adv" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label>
           <select id="variant"><option value="plantilla">Como en la plantilla (usa el nivel anterior)</option><option value="estandar">Fórmula estándar (usa el nivel actual)</option></select></div>
       </div>
-      <div class="chk"><input type="checkbox" id="manOn"><label for="manOn"><b>Agregar un escenario manual.</b> <span class="muted">Pruebe sus propios parámetros y compárelos con los optimizados.</span></label></div>
+      <div class="chk"><input type="checkbox" id="manOn"><label for="manOn"><b>Agregar un escenario manual.</b> <span class="muted">Pruebe sus propios parámetros y compárelos con los optimizados.</span></label><button type="button" class="helpbtn" data-help="manual" data-panel="hp-adv" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></div>
       <div id="manBox" class="hidden" style="margin-top:10px;max-width:520px">
         <label class="f" for="manType">Modelo</label>
         <select id="manType"><option value="ses">Suavización exponencial simple</option><option value="holt">Holt</option><option value="winters">Winters</option><option value="pm">Promedio móvil</option></select>
@@ -212,6 +246,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
         <div class="slider" id="sN"><span>N</span><input type="range" id="rN" min="2" max="24" step="1" value="6"><output id="oN">6</output></div>
       </div>
     </details>
+    <div id="alertsPre" aria-live="polite"></div>
     <div class="actions"><button class="btn pri lg" id="btnRun" disabled>Ejecutar simulación</button><span class="muted" id="runHint" style="align-self:center">Cargue datos para habilitar la simulación.</span></div>
   </div>
 </section>
@@ -219,38 +254,52 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
 <section class="step hidden" id="resultados">
   <div class="step-h"><span class="n">3</span><h2>Resultados</h2></div>
   <div id="verdict"></div>
+  <div class="helppanel hidden" id="hp-res" role="region" aria-live="polite"></div>
+  <div id="alertsPost"></div>
 
-  <h3 style="font-size:17px;margin:26px 0 10px">Comparación de los modelos</h3>
+  <h3 style="font-size:17px;margin:26px 0 10px">Comparación de los modelos<button type="button" class="helpbtn" data-help="tabla" data-panel="hp-tbl" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></h3>
+  <div class="helppanel hidden" id="hp-tbl" role="region" aria-live="polite"></div>
   <div class="tblwrap"><table id="tbl"></table></div>
   <p class="muted" style="font-size:13px;margin:8px 2px 0" id="tblNote"></p>
 
-  <h3 style="font-size:17px;margin:26px 0 10px">Real vs. pronóstico</h3>
+  <h3 style="font-size:17px;margin:26px 0 10px">Real vs. pronóstico<button type="button" class="helpbtn" data-help="grafico" data-panel="hp-chart" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></h3>
+  <div class="helppanel hidden" id="hp-chart" role="region" aria-live="polite"></div>
   <div class="card">
     <div class="chips" id="chips"></div>
     <div class="chartbox" id="chartbox"><svg id="main" viewBox="0 0 920 390" width="100%" role="img" aria-label="Demanda real y pronósticos por modelo"></svg><div class="tip hidden" id="tip"></div></div>
   </div>
 
   <div class="grid2" style="margin-top:16px">
-    <div class="card"><h3 style="font-size:16px;margin-bottom:6px">Errores del modelo elegido</h3><p class="muted" style="margin:0 0 6px;font-size:13px">Real menos pronóstico en cada período. Barras arriba: el modelo subestimó.</p><svg id="resid" viewBox="0 0 460 190" width="100%" role="img" aria-label="Errores del modelo elegido por período"></svg></div>
-    <div class="card"><h3 style="font-size:16px;margin-bottom:6px">Pronóstico del modelo elegido</h3><div class="tblwrap" style="border:0;max-height:250px;overflow:auto"><table id="fcTbl" style="min-width:0"></table></div></div>
+    <div class="card"><h3 style="font-size:16px;margin-bottom:6px">Errores del modelo elegido<button type="button" class="helpbtn" data-help="errores" data-panel="hp-err" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></h3><div class="helppanel hidden" id="hp-err" role="region" aria-live="polite"></div><p class="muted" style="margin:0 0 6px;font-size:13px">Real menos pronóstico en cada período. Barras arriba: el modelo subestimó.</p><svg id="resid" viewBox="0 0 460 190" width="100%" role="img" aria-label="Errores del modelo elegido por período"></svg></div>
+    <div class="card"><h3 style="font-size:16px;margin-bottom:6px">Pronóstico del modelo elegido<button type="button" class="helpbtn" data-help="banda" data-panel="hp-band" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></h3><div class="helppanel hidden" id="hp-band" role="region" aria-live="polite"></div><div class="tblwrap" style="border:0;max-height:250px;overflow:auto"><table id="fcTbl" style="min-width:0"></table></div></div>
   </div>
 
-  <h3 style="font-size:17px;margin:26px 0 10px">Justificación del método</h3>
+  <h3 style="font-size:17px;margin:26px 0 10px">Justificación del método<button type="button" class="helpbtn" data-help="justificacion" data-panel="hp-just" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></h3>
+  <div class="helppanel hidden" id="hp-just" role="region" aria-live="polite"></div>
   <div class="card just" id="just"></div>
   <div class="card" style="margin-top:16px">
-    <label class="f" for="notes">Observaciones del grupo <span class="muted">(se incluyen en el informe)</span></label>
+    <label class="f" for="notes">Observaciones del grupo <span class="muted">(se incluyen en el informe)</span><button type="button" class="helpbtn" data-help="observaciones" data-panel="hp-obs" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label>
     <textarea id="notes" placeholder="Comente supuestos del proyecto, eventos atípicos o decisiones que no capturan los modelos."></textarea>
-    <div class="actions"><button class="btn pri" id="btnExport">Descargar informe en Excel</button><button class="btn hidden" id="btnSend">Enviar resultados al docente</button><span class="muted" id="expMsg" style="align-self:center"></span><span class="muted" id="sendMsg" style="align-self:center" role="status"></span></div>
+    <div class="actions"><button class="btn pri" id="btnExport">Descargar informe en Excel</button><button class="btn hidden" id="btnSend">Enviar resultados al docente</button><span class="muted" id="expMsg" style="align-self:center"></span><span class="muted" id="sendMsg" style="align-self:center" role="status"></span><button type="button" class="helpbtn" data-help="informe" data-panel="hp-obs" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></div>
+    <div class="helppanel hidden" id="hp-obs" role="region" aria-live="polite"></div>
   </div>
 </section>
 
 <section class="step" id="metodo">
-  <div class="step-h"><span class="n"></span><h2>Cómo funciona</h2></div>
-  <div class="card just">
-    <p><b>Modelos.</b> Son los de la plantilla, con los mismos supuestos, más la tasa media de crecimiento (en versión período a período y en versión anual sobre el mismo período del ciclo anterior): promedio simple (nivel constante), promedio móvil (patrones inestables), tendencia lineal, suavización exponencial simple (más peso a lo reciente), Holt (tendencia que cambia), tendencia y estacionalidad (índices multiplicativos estables) y Winters (tendencia y estacionalidad adaptativas). Con los mismos datos y parámetros, el motor reproduce los MAD de la plantilla.</p>
-    <p><b>Optimización.</b> Los modelos «optimizados» buscan α, β, γ o N que minimizan el MAD de ajuste, como el Solver. «Winters con Solver completo» también reestima nivel, tendencia e índices iniciales, igual que la hoja «Mejor Pronóstico».</p>
-    <p><b>Validación.</b> Se ajusta con la parte inicial de la serie y se pronostica el tramo final que el modelo no vio. Un modelo que ajusta muy bien el pasado pero falla en la validación está sobreajustado, y por eso el ranking usa la validación.</p>
-    <p><b>Métricas.</b> MAD = promedio de |error|. RMSE = raíz del error cuadrático medio. MAPE = error porcentual medio. Señal de rastreo = suma de errores ÷ MAD; fuera de ±4 indica sesgo sistemático.</p>
+  <div class="step-h"><span class="n"></span><h2>Guía de los modelos y términos</h2></div>
+  <div class="card">
+    <p class="muted" style="margin-top:0">Abra cada punto para ver qué hace el modelo, cuándo conviene y un ejemplo con números simples.</p>
+    <details class="gl"><summary>Promedio simple</summary><div><p><b>Idea:</b> pronostica el promedio de todo el histórico.</p><p><b>Cuándo sirve:</b> demanda estable, sin tendencia ni temporadas.</p><p><b>Ejemplo:</b> ventas de 100, 110, 90 y 100 unidades dan un promedio de 100; el pronóstico es 100 para todos los períodos futuros.</p></div></details>
+    <details class="gl"><summary>Promedio móvil (N)</summary><div><p><b>Idea:</b> promedia solo los últimos N períodos, así olvida el pasado lejano.</p><p><b>Cuándo sirve:</b> demanda que cambia de nivel de vez en cuando, sin tendencia clara.</p><p><b>Ejemplo:</b> con N = 2 y ventas de 80, 100 y 120, el pronóstico es (100 + 120) / 2 = 110.</p></div></details>
+    <details class="gl"><summary>Tendencia lineal (regresión)</summary><div><p><b>Idea:</b> traza una recta y suma la misma cantidad de unidades en cada período.</p><p><b>Cuándo sirve:</b> crecimiento o caída pareja, sin temporadas.</p><p><b>Ejemplo:</b> si la recta sube 50 unidades por mes: 1 000, 1 050, 1 100, 1 150…</p></div></details>
+    <details class="gl"><summary>Tasa media de crecimiento (período a período)</summary><div><p><b>Idea:</b> calcula el crecimiento porcentual promedio entre períodos y lo repite (crecimiento compuesto).</p><p><b>Cuándo sirve:</b> proyectos nuevos que crecen a un ritmo porcentual parecido y sin temporadas.</p><p><b>Ejemplo:</b> 1 000 → 1 100 (+10 %) → 1 210 (+10 %); el siguiente es 1 331. Con temporadas falla: promediar +50 % y −40 % da un crecimiento inflado.</p></div></details>
+    <details class="gl"><summary>Tasa media anual (mismo período del ciclo anterior)</summary><div><p><b>Idea:</b> compara cada mes con el mismo mes del año anterior, promedia ese crecimiento y lo aplica a los últimos valores.</p><p><b>Cuándo sirve:</b> hay temporadas y el negocio crece de un año a otro. Necesita al menos 2 ciclos completos.</p><p><b>Ejemplo:</b> si enero fue 1 000 y el crecimiento anual medio es 10 %, el próximo enero se proyecta en 1 100.</p></div></details>
+    <details class="gl"><summary>Suavización exponencial simple (SES, α)</summary><div><p><b>Idea:</b> da más peso a lo reciente. α entre 0 y 1: cerca de 1 reacciona rápido; cerca de 0 es estable.</p><p><b>Cuándo sirve:</b> nivel que cambia lentamente, sin tendencia ni temporadas.</p><p><b>Ejemplo:</b> α = 0,3, pronóstico anterior 100 y real 120: nuevo pronóstico = 0,3 × 120 + 0,7 × 100 = 106.</p></div></details>
+    <details class="gl"><summary>Holt (α, β)</summary><div><p><b>Idea:</b> SES más una tendencia que también se va actualizando.</p><p><b>Cuándo sirve:</b> crece o cae y el ritmo cambia con el tiempo, sin temporadas.</p><p><b>Ejemplo:</b> nivel 1 000 y tendencia +20 por período: pronósticos 1 020, 1 040, 1 060…</p></div></details>
+    <details class="gl"><summary>Tendencia y estacionalidad</summary><div><p><b>Idea:</b> recta de tendencia multiplicada por un índice estacional fijo para cada mes.</p><p><b>Cuándo sirve:</b> temporadas estables y tendencia lineal. Necesita al menos 2 ciclos.</p><p><b>Ejemplo:</b> la recta indica 1 000 para diciembre y su índice es 1,40 (40 % sobre el promedio): pronóstico = 1 400.</p></div></details>
+    <details class="gl"><summary>Winters (α, β, γ)</summary><div><p><b>Idea:</b> como el anterior, pero nivel, tendencia e índices se actualizan con cada dato. γ controla los índices.</p><p><b>Cuándo sirve:</b> tendencia y temporadas que cambian con el tiempo. Necesita al menos 2 ciclos.</p><p><b>Ejemplo:</b> si diciembre solía estar 40 % arriba del promedio y este año estuvo 50 % arriba, el índice sube un poco (más si γ es mayor).</p></div></details>
+    <details class="gl"><summary>Modelos «optimizados» y «Solver completo»</summary><div><p><b>Idea:</b> el sistema busca los valores de α, β, γ o N que minimizan el MAD de ajuste, como el Solver de Excel. El «Solver completo» también reestima nivel, tendencia e índices iniciales.</p><p><b>Cuidado:</b> más libertad significa más riesgo de sobreajuste; por eso se decide con la validación.</p><p><b>Ejemplo:</b> una SES optimizada que elige α = 1,00 solo copia el último dato: ajusta bien el pasado, pero es una señal de alerta.</p></div></details>
+    <details class="gl"><summary>Términos: MAD, RMSE, MAPE, señal de rastreo, sobreajuste</summary><div><p><b>MAD:</b> error absoluto promedio. Reales 100, 120, 90 y pronósticos 110, 110, 100: errores 10, 10, 10, MAD = 10.</p><p><b>RMSE:</b> castiga más los errores grandes. Errores 0, 0, 30: MAD = 10 pero RMSE = 17,3.</p><p><b>MAPE:</b> error en %. Real 200 y pronóstico 180: error de 10 %.</p><p><b>Señal de rastreo:</b> suma de errores ÷ MAD. Entre −4 y +4 es aceptable; fuera indica que el modelo se equivoca siempre hacia el mismo lado.</p><p><b>Sobreajuste:</b> el modelo memoriza el pasado y falla con datos nuevos. Ajuste 872 y validación 2 246 es un caso típico.</p></div></details>
   </div>
 </section>
 <footer>Los resultados dependen de los datos cargados y de la validación elegida. Ninguna información se guarda en un servidor: todo se calcula en su navegador.</footer>
@@ -661,18 +710,17 @@ function setData(vals, labs, dts, skipped) {
   const n = vals.length, allDates = dts.length && dts.every(d => d), st = allDates ? dateStep(dts) : null;
   S.step = st; S.dates = allDates ? dts : null;
   S.labels = vals.map((_, i) => allDates ? fmtDate(dts[i], st ? st.k : 'm') : (labs[i] != null ? String(labs[i]) : `P${i + 1}`));
-  const warn = [];
-  if (skipped) warn.push(`Se omitieron ${skipped} filas sin valor numérico.`);
-  if (vals.some(v => v < 0)) warn.push('Hay valores negativos; una demanda no debería serlo.');
-  if (n < 8) { msg(`Se leyeron solo ${n} datos. Se necesitan al menos 8 para simular.`, 'err'); S.y = []; renderPreview(); updateRun(); return; }
-  msg(`${n} datos leídos de «${esc(S.srcName)}».${warn.length ? ' ' + warn.join(' ') : ''}`, warn.length ? 'warn' : 'ok');
+  S.skipped = skipped;
+  if (n < 8) { msg(`Se leyeron solo ${n} datos. Se necesitan al menos 8 para simular.`, 'err'); S.y = []; renderPreview(); updateRun(); refreshAlerts(); return; }
+  msg(`${n} datos leídos de «${esc(S.srcName)}». Revise las alertas del paso 2 antes de simular.`, 'ok');
   // sugerir ciclo
   let m = 12;
   if (st) m = st.k === 'm' ? (st.add === 3 ? 4 : 12) : (st.add === 7 ? (n >= 104 ? 52 : 1) : 7);
   setCycle(m);
+  S.autoM = st ? m : null;
   autoHold();
   $('hor').value = Math.max(1, Math.min(getM() > 1 ? getM() : 6, 24));
-  renderPreview(); updateRun();
+  refreshAlerts(); renderPreview(); updateRun();
 }
 
 function setCycle(m) {
@@ -764,7 +812,7 @@ function run() {
   S.shown = new Set(top);
   S.just = buildJust();
   $('resultados').classList.remove('hidden');
-  renderVerdict(); renderTable(); renderChips(); drawMain(); drawResid(); renderFc(); renderJust();
+  renderVerdict(); renderTable(); renderChips(); drawMain(); drawResid(); renderFc(); renderJust(); renderPostAlerts();
   $('resultados').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -789,7 +837,7 @@ function coherent(c) { return c.manual ? null : c.coherent.includes(S.diag.patte
 const PATLBL = { 'estacionaria': 'nivel estable sin tendencia ni estacionalidad', 'tendencia': 'tendencia sin estacionalidad', 'tendencia+estacional': 'tendencia con estacionalidad', 'estacional': 'estacionalidad sin tendencia clara' };
 function renderVerdict() {
   const p = S.sel.pick, hasVal = S.cfg.holdout > 0, co = coherent(p), b = basisM(p);
-  const tags = [`<span class="tag">Modelo recomendado</span>`];
+  const tags = [`<span class="tag">Modelo recomendado</span>${ib('recomendado', 'hp-res')}`];
   if (co === true) tags.push('<span class="tag g">Coherente con el patrón</span>');
   if (co === false) tags.push('<span class="tag w">No coincide con el patrón</span>');
   if (S.sel.byParsimony) tags.push('<span class="tag p">Elegido por parsimonia</span>');
@@ -799,9 +847,9 @@ function renderVerdict() {
     <p class="muted" style="margin:0 0 10px">Parámetros: ${esc(p.paramsFull)}</p>
     <p style="margin:0;max-width:60ch">Patrón detectado en los datos: <b>${PATLBL[S.diag.pattern]}</b>. ${esc(S.just.headline)}</p></div>
     <div class="kpis">
-      <div class="kpi"><b>${fmtCrit(critV(p))}</b><span>${CRIT[S.cfg.criterion]} en ${hasVal ? 'validación' : 'ajuste'}</span></div>
-      <div class="kpi"><b>${fmt2(b.ts)}</b><span>señal de rastreo</span></div>
-      <div class="kpi"><b>${fmt0(p.inS.mad)}</b><span>MAD de ajuste</span></div>
+      <div class="kpi"><b>${fmtCrit(critV(p))}</b><span>${CRIT[S.cfg.criterion]} en ${hasVal ? 'validación' : 'ajuste'} ${ib('criterio', 'hp-res')}</span></div>
+      <div class="kpi"><b>${fmt2(b.ts)}</b><span>señal de rastreo ${ib('ts', 'hp-res')}</span></div>
+      <div class="kpi"><b>${fmt0(p.inS.mad)}</b><span>MAD de ajuste ${ib('mad', 'hp-res')}</span></div>
       <div class="kpi"><b>${fmt0(p.future.reduce((a, v) => a + v, 0))}</b><span>demanda total próx. ${S.cfg.horizon} períodos</span></div>
     </div></div>`;
 }
@@ -816,7 +864,7 @@ function alerts(c) {
 function renderTable() {
   const hv = S.cfg.holdout > 0, ranked = S.sel.sorted, na = S.cands.filter(c => c.na);
   const maxv = Math.max(...ranked.map(critV));
-  let h = `<thead><tr><th class="num">#</th><th>Modelo</th><th class="num">MAD ajuste</th>${hv ? `<th class="barcell">${CRIT[S.cfg.criterion]} validación</th><th class="num">RMSE val.</th><th class="num">MAPE val.</th>` : `<th class="barcell">${CRIT[S.cfg.criterion]} ajuste</th>`}<th class="num">Señal rastreo</th><th class="num">Parám.</th><th>Alertas</th><th>Gráfico</th></tr></thead><tbody>`;
+  let h = `<thead><tr><th class="num">#</th><th>Modelo</th><th class="num">MAD ajuste${ib('mad', 'hp-tbl')}</th>${hv ? `<th class="barcell">${CRIT[S.cfg.criterion]} validación${ib('valcol', 'hp-tbl')}</th><th class="num">RMSE val.${ib('rmse', 'hp-tbl')}</th><th class="num">MAPE val.${ib('mape', 'hp-tbl')}</th>` : `<th class="barcell">${CRIT[S.cfg.criterion]} ajuste</th>`}<th class="num">Señal rastreo${ib('ts', 'hp-tbl')}</th><th class="num">Parám.${ib('params', 'hp-tbl')}</th><th>Alertas${ib('alertas', 'hp-tbl')}</th><th>Gráfico</th></tr></thead><tbody>`;
   ranked.forEach((c, i) => {
     const pick = c.id === S.sel.pick.id, b = basisM(c);
     h += `<tr class="${pick ? 'pick' : ''}"><td class="num">${i + 1}</td>
@@ -979,6 +1027,156 @@ $('btnExport').onclick = async () => {
   $('expMsg').textContent = okk === true ? 'Informe generado.' : okk === 'declined' ? 'Descarga cancelada.' : 'No se pudo guardar el archivo.';
 };
 
+
+
+/* ===================== NOTAS INFORMATIVAS ===================== */
+const NOTES = {
+  datos: { t: 'Qué datos cargar', p: 'Cargue la demanda proyectada de su proyecto: una cifra por período (mes, trimestre…), en orden cronológico. Mientras más períodos, más confiable es la comparación; lo ideal son al menos 24 meses.', ex: 'Una panadería estima vender 1 200 panes en enero, 1 350 en febrero y 1 280 en marzo. Esas cifras van en una columna «Demanda» y los meses en otra columna «Período».' },
+  archivo: { t: 'Cómo debe ser el archivo', p: 'Excel (.xlsx, .xls) o CSV, con encabezados en la primera fila. Una columna con la demanda (obligatoria y numérica) y otra con el período (opcional). Sin filas de totales ni celdas de texto entre los datos. Puede bajar el formato con «Descargar formato de carga».', ex: 'Fila 1: «Período | Demanda». Fila 2: «ene-25 | 1200». Fila 3: «feb-25 | 1350». Una fila «Total | 15600» al final se tomaría como un período más y distorsionaría todo.' },
+  grupo: { t: 'Grupo y proyecto', p: 'Identifican su envío en la base de datos del docente. Escríbalos igual en todos los envíos para que se puedan agrupar.', ex: 'Grupo: «Grupo 3». Proyecto: «Planta de jugos de camu camu». Si en otro envío escribe «G3», el docente lo verá como un grupo distinto.' },
+  columnas: { t: 'Elegir la columna de demanda y de período', p: 'Si el archivo tiene varias columnas, indique cuál es la demanda y cuál el período. La página lo adivina por el encabezado (venta, demanda, mes, fecha…). Si la vista previa se ve rara, revise esta elección.', ex: 'Su hoja tiene «Año», «Mes» y «Ventas». Demanda = Ventas y Período = Mes. Si elige «Año» como demanda, verá una línea casi plana con valores como 2025.' },
+  ciclo: { t: 'Ciclo estacional', p: 'Es cuántos períodos tarda en repetirse un patrón de temporada. Con datos mensuales el ciclo es 12; con trimestrales, 4. Si su demanda no tiene temporadas, elija «Sin estacionalidad». Los modelos estacionales necesitan al menos 2 ciclos completos de datos.', ex: 'Una heladería vende más de diciembre a marzo cada año: ciclo 12. Una app nueva que crece sin temporadas: «Sin estacionalidad». Con 18 meses y ciclo 12 solo hay 1,5 ciclos, y Winters queda desactivado.' },
+  validacion: { t: 'Períodos de validación', p: 'Son los últimos períodos de la serie que se esconden a los modelos para ver qué tan bien pronostican datos que no conocían. Sin validación, un modelo complicado parece mejor de lo que es (sobreajuste). Sugerido: un ciclo completo, o cerca de 1/4 de los datos.', ex: 'Con 60 meses y validación 12: los modelos se ajustan con los meses 1 a 48 y se evalúan pronosticando los meses 49 a 60.' },
+  horizonte: { t: 'Períodos a pronosticar', p: 'Cuántos períodos hacia adelante quiere proyectar. Mientras más lejos, menos confiable. Evite pasar de la mitad de su histórico.', ex: 'Con 36 meses de historia, proyectar 12 meses es razonable. Proyectar 36 sería adivinar.' },
+  criterio: { t: 'Criterio de decisión', p: 'Es la medida de error con la que se elige el mejor modelo. MAD: error promedio en unidades. RMSE: castiga más los errores grandes. MAPE: error en porcentaje, útil para comparar productos de distinto tamaño (no sirve si hay ceros).', ex: 'MAD = 800 significa que el pronóstico se equivoca en promedio 800 unidades por período. MAPE = 12 % significa que se equivoca un 12 % en promedio.' },
+  pars: { t: 'Preferir el modelo más simple', p: 'Si un modelo más simple queda a menos de 5 % del mejor error, se prefiere el simple: estima menos parámetros, es más fácil de explicar y suele fallar menos con datos nuevos.', ex: 'Winters tiene MAD de validación 2 200 y la tasa media anual 2 307. La diferencia es 4,9 %, así que se elige la tasa media anual por ser más simple.' },
+  variant: { t: 'Actualización estacional de Winters', p: 'Winters actualiza los índices estacionales con el nivel de ventas. La plantilla usa el nivel del período anterior; la fórmula estándar de los textos usa el nivel actual. La diferencia es pequeña.', ex: 'Si quiere reproducir el MAD de la hoja «Winters» del Excel de referencia, deje «Como en la plantilla».' },
+  manual: { t: 'Escenario manual', p: 'Pruebe sus propios parámetros y compárelos con los optimizados. α (0 a 1) da peso a lo reciente: cerca de 1 reacciona rápido, cerca de 0 es estable. β controla la tendencia, γ la estacionalidad y N es la ventana del promedio móvil.', ex: 'SES con α = 0,9 casi copia el dato anterior; con α = 0,1 casi ignora los cambios recientes. Pruebe ambos y vea cuál queda mejor en la tabla.' },
+  recomendado: { t: 'Modelo recomendado', p: 'Es el modelo con menor error en los períodos de validación (con la regla de simplicidad si está activa). Es una recomendación numérica: usted debe comprobar que tenga sentido para su proyecto.', ex: 'Si el recomendado es «Promedio simple» pero sus datos crecen claramente, sospeche: quizá la validación es muy corta o hay un dato atípico.' },
+  tabla: { t: 'Cómo leer la tabla', p: 'Cada fila es un modelo, ordenado del menor al mayor error. El «MAD ajuste» mide cómo se ajusta al pasado; el error de validación mide cómo pronostica datos que no vio. Decida por la validación. Use las casillas de la última columna para verlos en el gráfico.', ex: 'Winters con Solver completo: ajuste 872 (muy bueno) pero validación 2 246. Winters de la plantilla: ajuste 1 329 y validación 2 200. El segundo pronostica mejor aunque ajusta peor.' },
+  mad: { t: 'MAD (error absoluto medio)', p: 'Promedio del valor absoluto del error, en unidades de demanda. Menor es mejor.', ex: 'Reales 100, 120, 90 y pronósticos 110, 110, 100: errores 10, 10 y 10, entonces MAD = 10.' },
+  valcol: { t: 'Error de validación', p: 'Mide qué tan bien pronostica el modelo los períodos que no vio. Es la columna que decide el ranking.', ex: 'Validación = 2 200 significa que en los últimos 12 meses el modelo se equivocó, en promedio, 2 200 unidades por mes.' },
+  rmse: { t: 'RMSE', p: 'Raíz del promedio de los errores al cuadrado. Castiga las fallas grandes más que el MAD.', ex: 'Errores 10, 10, 10: RMSE = 10. Errores 0, 0, 30: el MAD sigue en 10, pero el RMSE sube a 17,3 porque hay una falla grande.' },
+  mape: { t: 'MAPE', p: 'Error porcentual medio. No se calcula donde la demanda real es 0.', ex: 'Real 200 y pronóstico 180: error de 10 %. Un MAPE menor a 10 % es muy bueno; mayor a 30 % es pobre.' },
+  ts: { t: 'Señal de rastreo', p: 'Suma de los errores dividida por el MAD. Indica si el modelo se equivoca siempre hacia el mismo lado. Entre −4 y +4 es aceptable. Positiva: el modelo subestima. Negativa: sobreestima.', ex: 'Si el pronóstico queda por encima de lo real en 10 de 12 meses, la señal será muy negativa (por ejemplo −7): el modelo sobreestima.' },
+  params: { t: 'Parámetros (Parám.)', p: 'Cantidad aproximada de valores que el modelo debe estimar con sus datos. Más parámetros dan más flexibilidad, pero también más riesgo de sobreajuste.', ex: 'El promedio simple estima 1 valor. Winters con Solver completo estima 29 con 60 datos: casi la mitad de los datos.' },
+  alertas: { t: 'Alertas de la tabla', p: 'Sobreajuste: el modelo optimizado tiene un error de validación mayor a 1,5 veces su error de ajuste. Peor en validación: lo mismo en un modelo sin optimizar (el patrón cambió al final). Subestima / Sobreestima: la señal de rastreo está fuera de ±4.', ex: 'Winters con Solver completo: ajuste 872 y validación 2 246 (2,6 veces): «Sobreajuste». SES con α = 0,10: ajuste 3 935 y validación 6 282 (1,6 veces): «Peor en validación».' },
+  grafico: { t: 'Cómo leer el gráfico', p: 'Línea negra: demanda real. Líneas de color: lo que cada modelo habría pronosticado en el pasado y su proyección futura (punteada). Zona azul: validación. Zona naranja: pronóstico. Sombra: banda de ≈95 % del modelo elegido. Pase el mouse para ver los valores.', ex: 'Si la línea de un modelo sigue los picos de la línea negra, capta la estacionalidad. Si es una recta que los ignora, no la capta.' },
+  errores: { t: 'Errores del modelo elegido', p: 'Real menos pronóstico en cada período. Barras azules: el modelo subestimó. Barras rojas: sobreestimó. Un buen modelo tiene barras pequeñas y sin rachas largas del mismo color. La zona sombreada es la validación.', ex: 'Diez barras rojas seguidas indican que el modelo sobreestima de forma sistemática: revise otro modelo o los datos.' },
+  banda: { t: 'Pronóstico y banda de ≈95 %', p: 'La banda es el rango donde probablemente caerá la demanda real. Se calcula como pronóstico ± 1,96 × 1,25 × MAD y es solo una aproximación. No baja de cero.', ex: 'Pronóstico 4 132 con banda de 0 a 9 523: hay mucha incertidumbre y conviene planificar con un rango, no con un solo número.' },
+  justificacion: { t: 'Justificación del método', p: 'Texto generado con los números de su propia simulación: el patrón de los datos, cómo se comparó, por qué ganó ese modelo y qué riesgos tiene. Úselo como base, pero revíselo y agregue su criterio en las observaciones.', ex: 'Si dice «no coincide con el patrón», explique en sus observaciones por qué aceptan ese modelo de todos modos.' },
+  observaciones: { t: 'Observaciones del grupo', p: 'Espacio para su criterio: supuestos del proyecto, eventos atípicos (promociones, cierres, pandemias) y decisiones que un modelo no puede ver.', ex: 'Se abrirá una segunda sucursal en julio y el modelo no lo sabe; el grupo propone sumar 20 % a la demanda desde ese mes.' },
+  informe: { t: 'Descargar y enviar', p: 'Descargar informe: Excel con resumen, comparación, series y pronóstico para su entrega. Enviar resultados: guarda su resultado en la base del docente (necesita el nombre del grupo). Si cambia las observaciones y vuelve a enviar, se crea un registro nuevo.', ex: 'Descargue primero el Excel como respaldo, luego pulse «Enviar». Si cierra la página sin descargar, pierde sus resultados.' }
+};
+const ib = (k, p) => `<button type="button" class="helpbtn" data-help="${k}" data-panel="${p}" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button>`;
+function noteHTML(k) {
+  const n = NOTES[k]; if (!n) return '';
+  return `<div class="hp-h"><b>${n.t}</b><button type="button" class="hp-x" data-closehelp aria-label="Cerrar nota">×</button></div><p>${n.p}</p><p class="hp-ex"><b>Ejemplo:</b> ${n.ex}</p>`;
+}
+document.addEventListener('click', e => {
+  const x = e.target.closest('[data-closehelp]');
+  if (x) { const p = x.closest('.helppanel'); p.classList.add('hidden'); document.querySelectorAll(`[data-panel="${p.id}"]`).forEach(b => b.setAttribute('aria-expanded', 'false')); return; }
+  const b = e.target.closest('[data-help]'); if (!b) return;
+  e.preventDefault();
+  const k = b.dataset.help, p = $(b.dataset.panel); if (!p) return;
+  const same = !p.classList.contains('hidden') && p.dataset.k === k;
+  document.querySelectorAll(`[data-panel="${p.id}"]`).forEach(o => o.setAttribute('aria-expanded', 'false'));
+  if (same) { p.classList.add('hidden'); return; }
+  p.dataset.k = k; p.innerHTML = noteHTML(k); p.classList.remove('hidden');
+  document.querySelectorAll(`[data-help="${k}"][data-panel="${p.id}"]`).forEach(o => o.setAttribute('aria-expanded', 'true'));
+});
+
+/* ===================== ALERTAS ===================== */
+const median = a => { const s = a.slice().sort((x, y) => x - y), k = s.length; return k ? (k % 2 ? s[(k - 1) / 2] : (s[k / 2 - 1] + s[k / 2]) / 2) : NaN; };
+function outlierIdx(y, m) {
+  const n = y.length; let res;
+  if (m > 1 && n >= 2 * m) { const f = mTE(y, m).fitted; res = y.map((v, i) => f[i] > 0 ? v / f[i] - 1 : 0); }
+  else { const o = ols(y); res = y.map((v, i) => v - (o.a + o.b * (i + 1))); }
+  const med = median(res), mad = median(res.map(r => Math.abs(r - med))) * 1.4826;
+  if (!(mad > 0)) return [];
+  return res.map((r, i) => Math.abs(r - med) / mad > 6 ? i : -1).filter(i => i >= 0);
+}
+function hiddenCycle(y) {
+  const o = ols(y), r = y.map((v, i) => v - (o.a + o.b * (i + 1))), mu = mean(r), den = r.reduce((a, v) => a + (v - mu) ** 2, 0);
+  if (!(den > 0)) return null; let best = null;
+  for (const L of [12, 4, 7, 6]) {
+    if (y.length < 2 * L + 2) continue;
+    let num = 0; for (let i = 0; i + L < r.length; i++) num += (r[i] - mu) * (r[i + L] - mu);
+    const a = num / den; if (a > 0.4 && (!best || a > best.a)) best = { L, a };
+  }
+  return best;
+}
+const monthsBetween = (a, b) => (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + (b.getUTCMonth() - a.getUTCMonth());
+function alertHTML(a) {
+  const lbl = { err: 'Error', warn: 'Aviso', info: 'Nota', ok: 'Listo' }[a.l], cls = { err: 'b', warn: 'w', info: 'p', ok: 'g' }[a.l];
+  return `<div class="alert ${a.l}"${a.l === 'err' ? ' role="alert"' : ''}><div class="al-h"><span class="tag ${cls}">${lbl}</span><b>${a.t}</b></div><p>${a.x}</p>` +
+    (a.ej ? `<p class="al-ex"><b>Ejemplo:</b> ${a.ej}</p>` : '') + (a.do ? `<p class="al-do"><b>Qué hacer:</b> ${a.do}</p>` : '') + '</div>';
+}
+const ORD = { err: 0, warn: 1, info: 2, ok: 3 };
+function alertsBlock(list, titleFn) {
+  if (!list.length) return '';
+  list = list.slice().sort((a, b) => ORD[a.l] - ORD[b.l]);
+  const c = l => list.filter(a => a.l === l).length;
+  return `<p class="alsum">${titleFn(c('err'), c('warn'), c('info'))}</p>` + list.map(alertHTML).join('');
+}
+const plural = (n, s, p) => `${n} ${n === 1 ? s : p}`;
+
+function preAlerts() {
+  const A = [], y = S.y; if (y.length < 8) return A;
+  const n = y.length, m = getM(), h = Math.max(0, Math.round(+$('hold').value || 0)), H = Math.round(+$('hor').value || 0), nt = n - h, crit = $('crit').value;
+  const zeros = y.filter(v => v === 0).length, neg = y.filter(v => v < 0).length;
+  if (n < 24) A.push({ l: 'warn', t: `Serie corta: ${n} períodos`, x: 'Con menos de 24 períodos mensuales (dos años) no se pueden usar los modelos estacionales y los resultados son poco estables.', ej: `Con 18 meses y ciclo 12 solo hay 1,5 ciclos: Winters y «Tendencia y estacionalidad» se desactivan.`, do: 'Si puede, extienda la proyección de demanda a 24 meses o más. Si no, elija «Sin estacionalidad» y trate el resultado como indicativo.' });
+  if (S.skipped) A.push({ l: 'warn', t: S.skipped === 1 ? 'Se omitió 1 fila sin valor numérico' : `Se omitieron ${S.skipped} filas sin valor numérico`, x: 'Esas filas no tenían un número válido en la columna de demanda (celdas vacías, texto, totales o encabezados repetidos).', ej: 'Una fila «Total 2025» o una celda con «n/d» no puede ser un período de demanda.', do: 'Verifique que eligió la columna correcta y que no hay filas de totales. Corrija el archivo y cárguelo de nuevo si faltan períodos.' });
+  if (neg) A.push({ l: 'err', t: neg === 1 ? 'Hay 1 valor negativo' : `Hay ${neg} valores negativos`, x: 'Una demanda no puede ser negativa. Los modelos funcionan, pero los resultados no serán confiables.', ej: 'Un dato de −50 unidades puede ser una devolución mal registrada.', do: 'Corrija el dato, o reemplácelo por 0 si son devoluciones netas.' });
+  if (zeros / n >= 0.2) A.push({ l: 'warn', t: `${fmt0(zeros / n * 100)} % de los períodos tiene demanda 0`, x: 'Es demanda intermitente. El MAPE no se calcula donde la demanda es 0 y los modelos exponenciales rinden mal.', ej: 'Un repuesto que se vende solo 3 de cada 10 meses.', do: 'Use MAD como criterio y considere agrupar la demanda en períodos más largos (por ejemplo, por trimestre).' });
+  else if (zeros > 0 && crit === 'mape') A.push({ l: 'info', t: 'Hay períodos con demanda 0 y eligió MAPE', x: 'El MAPE ignora los períodos donde la demanda real es 0, así que el error se calcula con menos datos.', ej: 'Si 3 de 36 meses valen 0, el MAPE se calcula con 33 meses.', do: 'Considere usar MAD o RMSE como criterio.' });
+  const out = outlierIdx(y, m);
+  if (out.length && out.length <= Math.max(3, Math.floor(n / 8))) A.push({ l: 'info', t: `Posibles datos atípicos: ${out.slice(0, 5).map(i => esc(S.labels[i])).join(', ')}`, x: 'Estos períodos se alejan mucho de lo que sugiere el patrón del resto de la serie. Un dato atípico distorsiona los parámetros de los modelos.', ej: 'Si la demanda típica ronda 1 000 y un mes marca 9 000 (error de digitación o promoción única), el modelo se «asusta» y pronostica de más.', do: 'Verifique que sean correctos. Si fueron eventos únicos, corríjalos o explíquelos en las observaciones.' });
+  if (S.dates && S.step && S.step.k === 'm') {
+    let bad = 0, back = 0;
+    for (let i = 1; i < S.dates.length; i++) { const d = monthsBetween(S.dates[i - 1], S.dates[i]); if (d <= 0) back++; else if (d !== S.step.add) bad++; }
+    if (back) A.push({ l: 'err', t: 'Las fechas están desordenadas o repetidas', x: 'Los modelos suponen que los datos van en orden cronológico, un período tras otro.', ej: 'Si «mar-25» aparece antes que «feb-25», la tendencia y las temporadas se calculan mal.', do: 'Ordene el archivo por fecha, del más antiguo al más reciente, y cárguelo de nuevo.' });
+    else if (bad) A.push({ l: 'warn', t: 'Faltan períodos en la serie de fechas', x: 'Hay saltos entre fechas consecutivas. Los modelos tratan cada fila como el período siguiente, así que un mes faltante desplaza las temporadas.', ej: 'Si falta abril, mayo quedaría contado como abril y el ciclo se descuadra un mes.', do: 'Agregue los períodos faltantes (con su demanda estimada o 0) para tener una fila por período.' });
+  }
+  if (S.autoM && m === S.autoM && S.dates) A.push({ l: 'info', t: `Ciclo sugerido: ${m}`, x: `Por el tipo de fechas de su archivo, la página propone un ciclo estacional de ${m} períodos. Confírmelo según su proyecto.`, ej: 'Fechas mensuales dan ciclo 12; fechas trimestrales dan ciclo 4. Si su proyecto no tiene temporadas, cámbielo a «Sin estacionalidad».', do: 'Revise el campo «Ciclo estacional» antes de simular.' });
+  if (S.step && S.step.k === 'm') {
+    const exp = S.step.add === 1 ? 12 : 4;
+    if (m > 1 && m !== exp) A.push({ l: 'warn', t: `El ciclo (${m}) no coincide con la frecuencia de sus fechas`, x: `Sus fechas parecen ${S.step.add === 1 ? 'mensuales' : 'trimestrales'}, que normalmente dan un ciclo de ${exp}.`, ej: 'Con datos mensuales y ciclo 4 se asumiría que las temporadas se repiten cada 4 meses, que no es lo habitual.', do: `Use ${exp} salvo que sepa que su temporada se repite cada ${m} períodos.` });
+  }
+  if (m > 1 && n < 2 * m) A.push({ l: 'warn', t: 'Modelos estacionales desactivados: faltan datos', x: `Con ciclo ${m} se necesitan al menos ${2 * m} períodos y usted tiene ${n}.`, ej: `${n} datos con ciclo ${m} son ${fmt1(n / m)} ciclos. Winters y «Tendencia y estacionalidad» no pueden estimar bien los índices.`, do: 'Amplíe la serie o elija «Sin estacionalidad».' });
+  else if (m > 1 && h > 0 && nt < 2 * m) A.push({ l: 'warn', t: 'El tramo de ajuste no alcanza para 2 ciclos', x: `Con ${h} períodos de validación quedan ${nt} para ajustar, y con ciclo ${m} se necesitan ${2 * m}. Los modelos estacionales se desactivarán en la simulación.`, ej: `60 datos, ciclo 12 y validación 40 dejan solo 20 períodos de ajuste (menos de 24).`, do: `Reduzca la validación a ${Math.max(0, n - 2 * m)} o menos.` });
+  if (m === 1 && n >= 14) { const hc = hiddenCycle(y); if (hc) A.push({ l: 'warn', t: `Sus datos parecen repetirse cada ${hc.L} períodos`, x: `Eligió «Sin estacionalidad», pero al quitar la tendencia la serie muestra un patrón que se repite cada ${hc.L} períodos (correlación ${fmt2(hc.a)}).`, ej: 'Si sus ventas suben cada diciembre y caen cada febrero, eso es estacionalidad y los modelos sin ciclo la ignoran.', do: `Pruebe con un ciclo de ${hc.L} y compare los resultados.` }); }
+  if (h === 0) A.push({ l: 'warn', t: 'Sin períodos de validación', x: 'El ranking usará solo el error de ajuste, que favorece a los modelos con más parámetros.', ej: 'Un modelo con 29 parámetros ajusta casi perfecto el pasado, pero puede fallar al pronosticar.', do: 'Use una validación de un ciclo (por ejemplo 12) o cerca de 1/4 de los datos.' });
+  else if (h < 3) A.push({ l: 'info', t: `Validación muy corta (${h})`, x: 'Con tan pocos períodos, el ranking puede depender del azar.', ej: 'Con 2 meses de validación, un modelo puede ganar solo porque esos 2 meses fueron tranquilos.', do: 'Use al menos 6 períodos si sus datos lo permiten.' });
+  else if (h > Math.floor(n / 3)) A.push({ l: 'warn', t: `Validación demasiado larga (${h} de ${n})`, x: 'Quedan pocos datos para ajustar los modelos.', ej: `Con ${n} datos y validación ${h}, los modelos se ajustan solo con ${nt} períodos.`, do: `Reduzca la validación a ${Math.floor(n / 3)} o menos.` });
+  if (n - h < 8 && h > 0) A.push({ l: 'info', t: 'La validación se reducirá automáticamente', x: 'Se necesitan al menos 8 períodos para ajustar los modelos.', ej: `Con ${n} datos, la validación máxima es ${Math.max(0, n - 8)}.`, do: 'Revise el valor que quedará al ejecutar.' });
+  if (H > n / 2) A.push({ l: 'warn', t: `Horizonte largo: ${H} períodos con ${n} de historia`, x: 'Pronosticar más de la mitad del histórico es poco confiable: el error crece con la distancia.', ej: 'Con 36 meses de historia, proyectar 12 meses es razonable; proyectar 36 sería adivinar.', do: `Reduzca el horizonte a ${Math.max(1, Math.floor(n / 2))} o menos, o explique la incertidumbre en las observaciones.` });
+  if (!A.some(a => a.l === 'err' || a.l === 'warn')) A.push({ l: 'ok', t: 'Configuración lista para simular', x: 'No se detectaron problemas con los datos ni con la configuración.', ej: 'Después de simular, revise las alertas de los resultados antes de entregar.' });
+  return A;
+}
+function refreshAlerts() {
+  const el = $('alertsPre'); if (!el) return;
+  el.innerHTML = S.y.length >= 8 ? alertsBlock(preAlerts(), (e, w, i) => e + w ? `Revise antes de simular: ${[e ? plural(e, 'error', 'errores') : '', w ? plural(w, 'aviso', 'avisos') : '', i ? plural(i, 'nota', 'notas') : ''].filter(Boolean).join(', ')}` : 'Antes de simular') : '';
+}
+
+function postAlerts() {
+  const A = [], { cfg, sel, cands, diag: d, y } = S, pk = sel.pick, hv = cfg.holdout > 0, n = y.length, nt = n - cfg.holdout, b = basisM(pk), crit = CRIT[cfg.criterion], H = cfg.horizon;
+  const co = coherent(pk);
+  if (co === false) A.push({ l: 'warn', t: 'El modelo elegido no coincide con el patrón de los datos', x: `Los datos muestran ${PATLBL[d.pattern]}, pero ${esc(pk.name)} no está diseñado para ese patrón. Ganó por su desempeño numérico.`, ej: 'Un promedio simple que gana en una serie con temporadas marcadas suele ser casualidad de un tramo de validación tranquilo.', do: 'Explique en las observaciones por qué aceptan este modelo, o pruebe otro ciclo o más períodos de validación.' });
+  if (Math.abs(b.ts) > 4) A.push({ l: 'warn', t: `Sesgo: el modelo ${b.ts > 0 ? 'subestima' : 'sobreestima'} la demanda`, x: `La señal de rastreo es ${fmt2(b.ts)}, fuera del rango aceptable de −4 a +4. El modelo se equivoca casi siempre hacia el mismo lado.`, ej: b.ts > 0 ? 'Si la demanda real queda por encima del pronóstico casi todos los meses, planificar con este pronóstico dejaría faltantes.' : 'Si la demanda real queda por debajo del pronóstico casi todos los meses, planificar con este pronóstico generaría exceso de inventario.', do: `Considere ajustar el pronóstico ${b.ts > 0 ? 'hacia arriba' : 'hacia abajo'} y mencionarlo en las observaciones, o probar otro modelo.` });
+  if (hv && pk.inS.mad > 0 && pk.val.mad / pk.inS.mad > 1.5) A.push({ l: 'warn', t: 'Posible sobreajuste en el modelo elegido', x: `Su error de validación (${fmt0(pk.val.mad)}) es ${fmt2(pk.val.mad / pk.inS.mad)} veces su error de ajuste (${fmt0(pk.inS.mad)}). Ajusta bien el pasado, pero pronostica peor los datos nuevos.`, ej: 'Es como estudiar solo las respuestas de un examen anterior: se saca 20 en la práctica y 12 en el examen real.', do: 'Compare con un modelo más simple, aumente los datos o use el pronóstico con cautela.' });
+  if (pk.k > 0.25 * nt) A.push({ l: 'warn', t: 'Demasiados parámetros para tan pocos datos', x: `${esc(pk.name)} estima unos ${pk.k} valores con solo ${nt} períodos de ajuste.`, ej: 'Estimar 29 valores con 48 datos es como trazar una curva que pase por casi todos los puntos.', do: 'Prefiera un modelo con menos parámetros si su error es parecido.' });
+  const mape = b.mape, rel = d.mean ? b.mad / d.mean : 0;
+  if (isFinite(mape) ? mape > 30 : rel > 0.3) A.push({ l: 'warn', t: 'El pronóstico es poco preciso', x: isFinite(mape) ? `El error porcentual medio (MAPE) es ${fmt1(mape)} %. Por encima de 30 % se considera pobre.` : `El MAD equivale a ${fmt0(rel * 100)} % de la demanda promedio.`, ej: 'Con un MAPE de 40 %, un pronóstico de 1 000 unidades podría terminar en 600 o en 1 400.', do: 'Planifique con la banda de ≈95 % y no con un solo número; analice si hay eventos que el modelo no ve.' });
+  else if (isFinite(mape) && mape > 15) A.push({ l: 'info', t: `Precisión moderada (MAPE ${fmt1(mape)} %)`, x: 'Entre 15 % y 30 % es aceptable para planificar, pero con margen de seguridad.', ej: 'Con MAPE de 20 %, un pronóstico de 1 000 unidades suele terminar entre 800 y 1 200.', do: 'Use la banda de ≈95 % al dimensionar capacidad o inventario.' });
+  if (sel.sorted.length > 1 && !sel.byParsimony) { const c0 = critV(sel.sorted[0]), c1 = critV(sel.sorted[1]); if (c0 > 0 && (c1 / c0 - 1) < 0.05) A.push({ l: 'info', t: 'Empate técnico entre los primeros modelos', x: `${esc(sel.sorted[0].name)} y ${esc(sel.sorted[1].name)} difieren menos de 5 % en ${crit} (${fmtCrit(c0)} y ${fmtCrit(c1)}).`, ej: 'Es como dos corredores que llegan con 0,3 segundos de diferencia: en otra carrera podrían invertirse.', do: 'Puede elegir el más simple o el más coherente con su proyecto, y justificarlo en las observaciones.' }); }
+  if (!hv) A.push({ l: 'warn', t: 'Ranking basado en el ajuste, no en la validación', x: 'Sin períodos de validación, los modelos con más parámetros tienen ventaja injusta.', ej: 'Un modelo de 29 parámetros casi siempre «gana» el ajuste.', do: 'Vuelva a simular con una validación de un ciclo o cerca de 1/4 de los datos.' });
+  else if (cfg.holdout < 6) A.push({ l: 'info', t: `Validación corta (${cfg.holdout} períodos)`, x: 'El ranking es indicativo: un tramo corto puede favorecer a un modelo por casualidad.', ej: 'Con 4 meses de validación, un modelo podría ganar solo porque esos 4 meses fueron tranquilos.', do: 'Si los datos alcanzan, use al menos 6 períodos o un ciclo completo.' });
+  if (cfg.m > 1 && d.seasonal && !d.seasonal.isSeasonal) A.push({ l: 'info', t: 'Los datos no muestran estacionalidad marcada', x: `Con ciclo ${cfg.m}, los índices estacionales solo explican ${fmt0(d.seasonal.strength * 100)} % del error de la tendencia (se considera marcada sobre 30 %).`, ej: 'Si sus ventas no suben ni bajan en meses fijos cada año, un ciclo de 12 solo agrega ruido.', do: 'Pruebe con «Sin estacionalidad» y compare los resultados.' });
+  const prev = y.slice(-H), prevT = prev.reduce((a, v) => a + v, 0), tot = pk.future.reduce((a, v) => a + v, 0);
+  if (prev.length === H && prevT > 0) { const pc = (tot / prevT - 1) * 100; if (pc > 50 || pc < -40) A.push({ l: 'warn', t: `Cambio brusco: ${pc > 0 ? '+' : ''}${fmt0(pc)} % frente al último tramo`, x: `El pronóstico de los próximos ${H} períodos (${fmt0(tot)}) difiere mucho de los últimos ${H} reales (${fmt0(prevT)}).`, ej: 'Pasar de vender 10 000 a proyectar 16 000 en el mismo tiempo necesita una razón concreta del proyecto.', do: 'Confirme que la tendencia proyectada es razonable; si no, elija otro modelo o justifique el cambio.' }); }
+  if (pk.id === 'tm_per') { const g = parseFloat((pk.paramsFull.match(/g=(-?[\d.]+)/) || [])[1]); if (isFinite(g)) { const f = Math.pow(1 + g / 100, H); if (f > 2 || f < 0.5) A.push({ l: 'warn', t: `Crecimiento compuesto: ×${fmt2(f)} en ${H} períodos`, x: `Con ${fmt1(g)} % por período, la demanda se multiplica por ${fmt2(f)} al final del horizonte. El crecimiento compuesto se dispara rápido.`, ej: 'Crecer 5 % mensual parece poco, pero en 12 meses es ×1,8.', do: 'Reduzca el horizonte o compare con la tendencia lineal.' }); } }
+  const lo = pk.future.filter(v => v - 1.96 * 1.25 * (hv ? pk.val.mad : pk.inS.mad) < 0).length;
+  if (lo / H >= 0.3) A.push({ l: 'info', t: 'La banda de incertidumbre llega a cero', x: `En ${lo} de ${H} períodos el límite inferior es 0: el error típico es del mismo tamaño que el pronóstico.`, ej: 'Pronóstico de 4 000 con MAD de 3 500: el rango de ≈95 % va de 0 a más de 12 000.', do: 'Use el pronóstico como orden de magnitud y planifique escenarios (bajo, esperado, alto).' });
+  const na = cands.filter(c => c.na);
+  if (na.length) A.push({ l: 'info', t: `${plural(na.length, 'modelo no participó', 'modelos no participaron')}`, x: `${na.map(c => esc(c.name)).join('; ')}. ${esc(na[0].na)}.`, ej: cfg.m === 1 ? 'Winters y «Tendencia y estacionalidad» necesitan un ciclo (por ejemplo 12 meses); con «Sin estacionalidad» no compiten.' : `Con ciclo ${cfg.m} y solo ${nt} datos de ajuste, Winters no puede estimar bien los ${cfg.m} índices estacionales.`, do: cfg.m === 1 ? 'Si su demanda sí tiene temporadas, elija el ciclo correspondiente. Si no, ignore esta nota.' : 'Amplíe la serie o reduzca la validación si quiere que compitan.' });
+  if (!A.some(a => a.l === 'warn' || a.l === 'err')) A.push({ l: 'ok', t: 'Sin alertas críticas en el resultado', x: 'El modelo elegido es coherente con el patrón, no muestra sesgo ni sobreajuste importantes.', ej: 'Aun así, un buen resultado numérico no incluye eventos futuros del proyecto (nuevas sucursales, promociones, cambios de precio).', do: 'Agregue en las observaciones los supuestos del proyecto y descargue el informe.' });
+  return A;
+}
+function renderPostAlerts() {
+  $('alertsPost').innerHTML = alertsBlock(postAlerts(), (e, w, i) => `Alertas del resultado: ${[e ? plural(e, 'error', 'errores') : '', w ? plural(w, 'aviso', 'avisos') : '', i ? plural(i, 'nota', 'notas') : ''].filter(Boolean).join(', ') || 'todo en orden'}`);
+}
+['hold', 'hor', 'cycle', 'cycleN', 'crit'].forEach(id => { $(id).addEventListener('input', refreshAlerts); $(id).addEventListener('change', refreshAlerts); });
 
 /* ---------- envío al docente (Google Apps Script) ---------- */
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
