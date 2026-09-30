@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador de pronósticos de demanda</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#EDF1F4;--surface:#FFFFFF;--surface2:#F5F8FA;--ink:#10202E;--muted:#587080;--line:#D3DDE5;--grid:#E4EAEF;
+  --primary:#0B5D7A;--primary-ink:#FFFFFF;--primary-soft:#DCEBF1;--accent:#F0A81C;--accent-soft:#FCEFD0;
+  --good:#1E7F55;--warn:#9A6408;--bad:#B8322A;--shade:rgba(11,93,122,.08);--shade2:rgba(240,168,28,.10);
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  --cond:'IBM Plex Sans Condensed','IBM Plex Sans',system-ui,'Arial Narrow',sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D1620;--surface:#15222D;--surface2:#1B2B38;--ink:#E7EEF4;--muted:#94A8B7;--line:#2B3D4B;--grid:#22323F;
+  --primary:#52B6DC;--primary-ink:#06212D;--primary-soft:#173847;--accent:#F2B84B;--accent-soft:#3A2F14;
+  --good:#4CC28C;--warn:#E3B04E;--bad:#EF7B72;--shade:rgba(82,182,220,.10);--shade2:rgba(242,184,75,.12);}}
+:root[data-theme="dark"]{
+  --bg:#0D1620;--surface:#15222D;--surface2:#1B2B38;--ink:#E7EEF4;--muted:#94A8B7;--line:#2B3D4B;--grid:#22323F;
+  --primary:#52B6DC;--primary-ink:#06212D;--primary-soft:#173847;--accent:#F2B84B;--accent-soft:#3A2F14;
+  --good:#4CC28C;--warn:#E3B04E;--bad:#EF7B72;--shade:rgba(82,182,220,.10);--shade2:rgba(242,184,75,.12);}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-text-size-adjust:100%}
+h1,h2,h3{margin:0;line-height:1.2;font-weight:600}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 64px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;padding-top:10px;padding-bottom:10px}
+.brand{font-weight:700;font-size:16px;letter-spacing:-.01em;white-space:nowrap}
+.brand small{font-weight:400;color:var(--muted);margin-left:8px}
+.nav{display:flex;gap:4px;margin-left:auto;overflow-x:auto}
+.nav a{padding:6px 12px;border-radius:6px;color:var(--muted);text-decoration:none;font-weight:500;white-space:nowrap}
+.nav a:hover,.nav a:focus-visible{background:var(--surface2);color:var(--ink);outline:none}
+.hero{padding:34px 0 8px}
+.hero h1{font-size:clamp(26px,4.2vw,40px);font-weight:700;letter-spacing:-.02em;max-width:22ch}
+.hero p{max-width:66ch;color:var(--muted);margin:12px 0 0;font-size:16px}
+section.step{margin-top:28px}
+.step-h{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+.step-h h2{font-size:20px}
+.step-h .n{font-family:var(--cond);font-weight:600;color:var(--primary);font-size:15px;min-width:22px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
+.grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}.nav{display:none}}
+label.f{display:block;font-weight:500;font-size:13px;color:var(--muted);margin-bottom:4px}
+input[type=text],input[type=number],select,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);min-height:40px}
+textarea{resize:vertical;min-height:88px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:26px 16px;text-align:center;background:var(--surface2);cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.on,.drop:focus-visible{border-color:var(--primary);background:var(--primary-soft);outline:none}
+.drop b{display:block;font-size:16px;margin-bottom:2px}
+.drop span{color:var(--muted);font-size:13px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:7px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500;min-height:40px}
+.btn:hover{background:var(--surface2)}
+.btn.pri{background:var(--primary);border-color:var(--primary);color:var(--primary-ink);font-weight:600}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.lg{padding:12px 22px;font-size:16px}
+.links{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+.linkbtn{background:none;border:0;padding:0;color:var(--primary);cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-weight:500}
+.muted{color:var(--muted)}
+.msg{padding:10px 12px;border-radius:7px;font-size:14px;margin-top:12px;border:1px solid var(--line);background:var(--surface2)}
+.msg.err{border-color:var(--bad);color:var(--bad)}
+.msg.warn{border-color:var(--warn);color:var(--warn)}
+.msg.ok{border-color:var(--good);color:var(--good)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.stat{background:var(--surface2);border-radius:8px;padding:8px 10px}
+.stat b{display:block;font-family:var(--cond);font-size:20px;font-weight:600}
+.stat span{font-size:12px;color:var(--muted)}
+@media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+details.adv{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+details.adv summary{cursor:pointer;font-weight:600}
+.slider{display:grid;grid-template-columns:34px 1fr 48px;gap:8px;align-items:center;margin-top:8px}
+.slider input{width:100%;accent-color:var(--primary)}
+.chk{display:flex;gap:8px;align-items:flex-start;margin-top:12px}
+.chk input{margin-top:4px;accent-color:var(--primary)}
+.hidden{display:none!important}
+/* resultado */
+.verdict{border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:10px;background:var(--surface);padding:22px 24px;display:grid;grid-template-columns:1.3fr 1fr;gap:24px}
+@media(max-width:860px){.verdict{grid-template-columns:1fr}}
+.verdict h3{font-size:clamp(22px,3vw,30px);letter-spacing:-.015em;margin:4px 0 8px}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--ink)}
+.tag.g{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.tag.w{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.tag.b{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.tag.p{background:var(--primary-soft);color:var(--primary)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start}
+.kpi{background:var(--surface2);border-radius:8px;padding:10px 12px}
+.kpi b{display:block;font-family:var(--cond);font-size:24px;font-weight:600}
+.kpi span{font-size:12px;color:var(--muted)}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:860px}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-family:var(--cond);font-weight:600;font-size:13px;color:var(--muted);background:var(--surface2);white-space:nowrap}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.pick td{background:var(--accent-soft)}
+tr.pick td:first-child{box-shadow:inset 5px 0 0 var(--accent)}
+tr.na td{color:var(--muted)}
+tbody tr:last-child td{border-bottom:0}
+.mname{font-weight:600}
+.mpar{font-size:12px;color:var(--muted)}
+.barcell{min-width:140px}
+.bar{height:6px;background:var(--grid);border-radius:3px;margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--primary);border-radius:3px}
+tr.pick .bar i{background:var(--accent)}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:middle;margin-right:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:99px;padding:4px 10px;background:var(--surface);cursor:pointer;font-size:13px;user-select:none}
+.chip input{accent-color:var(--primary);margin:0}
+.chartbox{position:relative}
+svg text{fill:var(--muted);font-family:var(--sans);font-size:11.5px}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);border-radius:8px;padding:8px 10px;font-size:12.5px;min-width:150px;z-index:5;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.tip b{font-weight:600}
+.tip div{display:flex;justify-content:space-between;gap:14px;font-variant-numeric:tabular-nums}
+.just h3{font-size:17px;margin:22px 0 6px}
+.just h3:first-child{margin-top:0}
+.just p{margin:6px 0;max-width:78ch}
+.just ul{margin:6px 0;padding-left:20px;max-width:78ch}
+.just li{margin:5px 0}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.spin{width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:2s}.drop{transition:none}}
+footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="brand">Simulador de pronósticos<small>Taller de proyecto</small></div>
+  <nav class="nav"><a href="#datos">Datos</a><a href="#config">Configuración</a><a href="#resultados">Resultados</a><a href="#metodo">Método</a></nav>
+</div></header>
+
+<main class="wrap">
+<div class="hero">
+  <h1>Cargue la demanda proyectada y deje que los modelos compitan</h1>
+  <p>El sistema ajusta los modelos de la plantilla de pronósticos (promedio, promedio móvil, tendencia, suavización exponencial, Holt, tendencia con estacionalidad y Winters) más la tasa media de crecimiento, optimiza sus parámetros como lo haría el Solver, los compara con los mismos datos y redacta la justificación del método elegido.</p>
+</div>
+
+<section class="step" id="datos">
+  <div class="step-h"><span class="n">1</span><h2>Cargar la demanda del proyecto</h2></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="row" style="margin-bottom:14px">
+        <div><label class="f" for="grp">Grupo</label><input type="text" id="grp" placeholder="Ej.: Grupo 3"></div>
+        <div><label class="f" for="prj">Proyecto</label><input type="text" id="prj" placeholder="Nombre del proyecto"></div>
+      </div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Seleccionar archivo de datos">
+        <b>Suelte aquí su archivo o haga clic para elegirlo</b>
+        <span>Excel (.xlsx, .xls) o CSV con una columna de demanda y, opcionalmente, una de período</span>
+      </div>
+      <input type="file" id="file" accept=".xlsx,.xls,.csv,.txt" class="hidden">
+      <div class="links">
+        <button class="linkbtn" id="btnSample">Probar con los datos de la plantilla</button>
+        <button class="linkbtn" id="btnTpl">Descargar formato de carga</button>
+        <button class="linkbtn" id="btnPasteToggle">Pegar desde Excel</button>
+      </div>
+      <div id="pasteBox" class="hidden" style="margin-top:12px">
+        <label class="f" for="paste">Pegue las columnas (período y demanda, o solo demanda)</label>
+        <textarea id="paste" placeholder="ene-25&#9;1200&#10;feb-25&#9;1350&#10;..."></textarea>
+        <div style="margin-top:8px"><button class="btn" id="btnPaste">Usar estos datos</button></div>
+      </div>
+      <div id="mapBox" class="hidden row" style="margin-top:14px">
+        <div id="sheetWrap"><label class="f" for="selSheet">Hoja</label><select id="selSheet"></select></div>
+        <div><label class="f" for="selDem">Columna de demanda</label><select id="selDem"></select></div>
+        <div><label class="f" for="selLab">Columna de período</label><select id="selLab"></select></div>
+      </div>
+      <div id="dataMsg"></div>
+    </div>
+    <div class="card" id="preview">
+      <h3 style="font-size:16px">Vista previa</h3>
+      <p class="muted" id="prevEmpty" style="margin:10px 0 0">Aún no hay datos. Cargue un archivo para ver la serie y sus estadísticas básicas.</p>
+      <div id="prevBody" class="hidden">
+        <div class="stats" id="stats"></div>
+        <svg id="spark" viewBox="0 0 400 110" width="100%" role="img" aria-label="Serie de demanda cargada"></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="step" id="config">
+  <div class="step-h"><span class="n">2</span><h2>Definir la simulación</h2></div>
+  <div class="card">
+    <div class="row">
+      <div><label class="f" for="cycle">Ciclo estacional</label>
+        <select id="cycle"><option value="12">Mensual (12 períodos)</option><option value="4">Trimestral (4)</option><option value="6">Bimestral (6)</option><option value="52">Semanal, ciclo anual (52)</option><option value="7">Diario, ciclo semanal (7)</option><option value="1">Sin estacionalidad</option><option value="0">Otro…</option></select>
+        <input type="number" id="cycleN" min="2" max="60" value="12" class="hidden" style="margin-top:6px" aria-label="Largo del ciclo"></div>
+      <div><label class="f" for="hold">Períodos de validación</label><input type="number" id="hold" min="0" value="12"></div>
+      <div><label class="f" for="hor">Períodos a pronosticar</label><input type="number" id="hor" min="1" max="60" value="12"></div>
+      <div><label class="f" for="crit">Criterio de decisión</label>
+        <select id="crit"><option value="mad">MAD (error absoluto medio)</option><option value="rmse">RMSE (penaliza errores grandes)</option><option value="mape">MAPE (error porcentual)</option></select></div>
+    </div>
+    <div class="chk"><input type="checkbox" id="pars" checked><label for="pars"><b>Preferir el modelo más simple si empata.</b> <span class="muted">Si otro modelo con menos parámetros queda a menos de 5 % del mejor error, se elige ese.</span></label></div>
+    <details class="adv">
+      <summary>Opciones avanzadas</summary>
+      <div class="row" style="margin-top:12px">
+        <div><label class="f" for="variant">Actualización estacional de Winters</label>
+          <select id="variant"><option value="plantilla">Como en la plantilla (usa el nivel anterior)</option><option value="estandar">Fórmula estándar (usa el nivel actual)</option></select></div>
+      </div>
+      <div class="chk"><input type="checkbox" id="manOn"><label for="manOn"><b>Agregar un escenario manual.</b> <span class="muted">Pruebe sus propios parámetros y compárelos con los optimizados.</span></label></div>
+      <div id="manBox" class="hidden" style="margin-top:10px;max-width:520px">
+        <label class="f" for="manType">Modelo</label>
+        <select id="manType"><option value="ses">Suavización exponencial simple</option><option value="holt">Holt</option><option value="winters">Winters</option><option value="pm">Promedio móvil</option></select>
+        <div class="slider" id="sAl"><span>α</span><input type="range" id="rAl" min="0" max="1" step="0.01" value="0.3"><output id="oAl">0.30</output></div>
+        <div class="slider" id="sBe"><span>β</span><input type="range" id="rBe" min="0" max="1" step="0.01" value="0.2"><output id="oBe">0.20</output></div>
+        <div class="slider" id="sGa"><span>γ</span><input type="range" id="rGa" min="0" max="1" step="0.01" value="0.1"><output id="oGa">0.10</output></div>
+        <div class="slider" id="sN"><span>N</span><input type="range" id="rN" min="2" max="24" step="1" value="6"><output id="oN">6</output></div>
+      </div>
+    </details>
+    <div class="actions"><button class="btn pri lg" id="btnRun" disabled>Ejecutar simulación</button><span class="muted" id="runHint" style="align-self:center">Cargue datos para habilitar la simulación.</span></div>
+  </div>
+</section>
+
+<section class="step hidden" id="resultados">
+  <div class="step-h"><span class="n">3</span><h2>Resultados</h2></div>
+  <div id="verdict"></div>
+
+  <h3 style="font-size:17px;margin:26px 0 10px">Comparación de los modelos</h3>
+  <div class="tblwrap"><table id="tbl"></table></div>
+  <p class="muted" style="font-size:13px;margin:8px 2px 0" id="tblNote"></p>
+
+  <h3 style="font-size:17px;margin:26px 0 10px">Real vs. pronóstico</h3>
+  <div class="card">
+    <div class="chips" id="chips"></div>
+    <div class="chartbox" id="chartbox"><svg id="main" viewBox="0 0 920 390" width="100%" role="img" aria-label="Demanda real y pronósticos por modelo"></svg><div class="tip hidden" id="tip"></div></div>
+  </div>
+
+  <div class="grid2" style="margin-top:16px">
+    <div class="card"><h3 style="font-size:16px;margin-bottom:6px">Errores del modelo elegido</h3><p class="muted" style="margin:0 0 6px;font-size:13px">Real menos pronóstico en cada período. Barras arriba: el modelo subestimó.</p><svg id="resid" viewBox="0 0 460 190" width="100%" role="img" aria-label="Errores del modelo elegido por período"></svg></div>
+    <div class="card"><h3 style="font-size:16px;margin-bottom:6px">Pronóstico del modelo elegido</h3><div class="tblwrap" style="border:0;max-height:250px;overflow:auto"><table id="fcTbl" style="min-width:0"></table></div></div>
+  </div>
+
+  <h3 style="font-size:17px;margin:26px 0 10px">Justificación del método</h3>
+  <div class="card just" id="just"></div>
+  <div class="card" style="margin-top:16px">
+    <label class="f" for="notes">Observaciones del grupo <span class="muted">(se incluyen en el informe)</span></label>
+    <textarea id="notes" placeholder="Comente supuestos del proyecto, eventos atípicos o decisiones que no capturan los modelos."></textarea>
+    <div class="actions"><button class="btn pri" id="btnExport">Descargar informe en Excel</button><button class="btn hidden" id="btnSend">Enviar resultados al docente</button><span class="muted" id="expMsg" style="align-self:center"></span><span class="muted" id="sendMsg" style="align-self:center" role="status"></span></div>
+  </div>
+</section>
+
+<section class="step" id="metodo">
+  <div class="step-h"><span class="n"></span><h2>Cómo funciona</h2></div>
+  <div class="card just">
+    <p><b>Modelos.</b> Son los de la plantilla, con los mismos supuestos, más la tasa media de crecimiento (en versión período a período y en versión anual sobre el mismo período del ciclo anterior): promedio simple (nivel constante), promedio móvil (patrones inestables), tendencia lineal, suavización exponencial simple (más peso a lo reciente), Holt (tendencia que cambia), tendencia y estacionalidad (índices multiplicativos estables) y Winters (tendencia y estacionalidad adaptativas). Con los mismos datos y parámetros, el motor reproduce los MAD de la plantilla.</p>
+    <p><b>Optimización.</b> Los modelos «optimizados» buscan α, β, γ o N que minimizan el MAD de ajuste, como el Solver. «Winters con Solver completo» también reestima nivel, tendencia e índices iniciales, igual que la hoja «Mejor Pronóstico».</p>
+    <p><b>Validación.</b> Se ajusta con la parte inicial de la serie y se pronostica el tramo final que el modelo no vio. Un modelo que ajusta muy bien el pasado pero falla en la validación está sobreajustado, y por eso el ranking usa la validación.</p>
+    <p><b>Métricas.</b> MAD = promedio de |error|. RMSE = raíz del error cuadrático medio. MAPE = error porcentual medio. Señal de rastreo = suma de errores ÷ MAD; fuera de ±4 indica sesgo sistemático.</p>
+  </div>
+</section>
+<footer>Los resultados dependen de los datos cargados y de la validación elegida. Ninguna información se guarda en un servidor: todo se calcula en su navegador.</footer>
+</main>
+
+<script>
+/* ===== MOTOR DE PRONÓSTICOS (replica la plantilla Modelos_Pronosticos_ST.xlsx) ===== */
+const mean = a => { let s = 0, c = 0; for (const v of a) { if (isFinite(v)) { s += v; c++; } } return c ? s / c : NaN; };
+
+function ols(y) {
+  const n = y.length, xb = (n + 1) / 2, yb = mean(y);
+  let sxx = 0, sxy = 0;
+  for (let i = 0; i < n; i++) { const dx = i + 1 - xb; sxx += dx * dx; sxy += dx * (y[i] - yb); }
+  const b = sxx ? sxy / sxx : 0, a = yb - b * xb;
+  let sse = 0, sst = 0;
+  for (let i = 0; i < n; i++) { const e = y[i] - (a + b * (i + 1)); sse += e * e; sst += (y[i] - yb) ** 2; }
+  const r2 = sst ? 1 - sse / sst : 0;
+  const se = n > 2 && sxx ? Math.sqrt(sse / (n - 2) / sxx) : NaN;
+  return { a, b, r2, t: se ? b / se : 0, sse, sst };
+}
+
+function seasonalIdx(y, m) {
+  const s = new Array(m).fill(0), c = new Array(m).fill(0);
+  y.forEach((v, i) => { s[i % m] += v; c[i % m]++; });
+  const g = mean(y);
+  let idx = s.map((v, i) => (v / c[i]) / g);
+  const mi = mean(idx);
+  return idx.map(v => Math.max(v / mi, 1e-3));
+}
+
+function metrics(actual, fc) {
+  let n = 0, sa = 0, ss = 0, se = 0, sp = 0, np = 0;
+  for (let i = 0; i < actual.length; i++) {
+    if (!isFinite(fc[i]) || !isFinite(actual[i])) continue;
+    const e = actual[i] - fc[i]; n++; sa += Math.abs(e); ss += e * e; se += e;
+    if (actual[i] !== 0) { sp += Math.abs(e) / Math.abs(actual[i]); np++; }
+  }
+  if (!n) return { n: 0, mad: NaN, rmse: NaN, mape: NaN, bias: NaN, ts: NaN };
+  const mad = sa / n;
+  return { n, mad, rmse: Math.sqrt(ss / n), mape: np ? sp / np * 100 : NaN, bias: se / n, ts: mad > 0 ? se / mad : 0 };
+}
+const madOf = (y, f) => { const m = metrics(y, f).mad; return isFinite(m) ? m : 1e12; };
+
+/* ---------- Modelos ---------- */
+function mPromedio(y) { const mu = mean(y); return { fitted: y.map(() => mu), fc: h => Array(h).fill(mu) }; }
+function mPM(y, N) {
+  const f = y.map((_, i) => i >= N ? mean(y.slice(i - N, i)) : NaN);
+  const last = mean(y.slice(-N));
+  return { fitted: f, fc: h => Array(h).fill(last) };
+}
+function mTend(y) {
+  const o = ols(y), n = y.length;
+  return { fitted: y.map((_, i) => o.a + o.b * (i + 1)), fc: h => Array.from({ length: h }, (_, k) => o.a + o.b * (n + k + 1)) };
+}
+function mSES(y, al) {
+  let F = mean(y); const f = [];
+  for (const v of y) { f.push(F); F = al * v + (1 - al) * F; }
+  return { fitted: f, fc: h => Array(h).fill(F) };
+}
+function mHolt(y, al, be, init) {
+  const o = init || ols(y); let L = o.L0 ?? o.a, T = o.T0 ?? o.b; const f = [];
+  for (const v of y) {
+    f.push(L + T);
+    const Ln = al * v + (1 - al) * (L + T);
+    T = be * (Ln - L) + (1 - be) * T; L = Ln;
+  }
+  return { fitted: f, fc: h => Array.from({ length: h }, (_, k) => L + (k + 1) * T) };
+}
+function mTE(y, m) {
+  const o = ols(y), S = seasonalIdx(y, m), n = y.length;
+  return {
+    fitted: y.map((_, i) => (o.a + o.b * (i + 1)) * S[i % m]),
+    fc: h => Array.from({ length: h }, (_, k) => (o.a + o.b * (n + k + 1)) * S[(n + k) % m])
+  };
+}
+function mWinters(y, m, al, be, ga, init, variant) {
+  const o = ols(y);
+  let L = init?.L0 ?? o.a, T = init?.T0 ?? o.b;
+  const s = (init?.S ?? seasonalIdx(y, m)).slice(), f = [], n = y.length;
+  for (let i = 0; i < n; i++) {
+    const p = i % m, v = y[i];
+    f.push((L + T) * s[p]);
+    const Ln = al * v / s[p] + (1 - al) * (L + T);
+    const Tn = be * (Ln - L) + (1 - be) * T;
+    const sn = ga * v / (variant === 'estandar' ? Ln : L) + (1 - ga) * s[p];
+    L = Ln; T = Tn; s[p] = Math.max(sn, 1e-3);
+  }
+  return { fitted: f, fc: h => Array.from({ length: h }, (_, k) => (L + (k + 1) * T) * s[(n + k) % m]) };
+}
+
+
+/* Tasa media de crecimiento */
+function mTasaPer(y) {            // promedio de tasas período a período
+  const r = []; for (let i = 1; i < y.length; i++) if (y[i - 1] > 0) r.push(y[i] / y[i - 1] - 1);
+  const g = Math.max(-0.9, mean(r)), n = y.length;
+  return { g, fitted: y.map((_, i) => i ? y[i - 1] * (1 + g) : NaN), fc: h => Array.from({ length: h }, (_, k) => y[n - 1] * Math.pow(1 + g, k + 1)) };
+}
+function mTasaAnual(y, m) {       // crecimiento medio entre ciclos completos, aplicado al mismo período del ciclo anterior
+  const K = Math.floor(y.length / m), T = [];
+  for (let c = 0; c < K; c++) T.push(y.slice(c * m, (c + 1) * m).reduce((a, v) => a + v, 0));
+  const r = []; for (let c = 1; c < K; c++) if (T[c - 1] > 0) r.push(T[c] / T[c - 1] - 1);
+  const g = Math.max(-0.9, mean(r)), n = y.length;
+  const fitted = y.map((_, i) => i >= m ? y[i - m] * (1 + g) : NaN);
+  return { g, fitted, fc: h => { const ext = y.slice(); for (let k = 0; k < h; k++) ext.push(ext[n + k - m] * (1 + g)); return ext.slice(n); } };
+}
+
+/* ---------- Optimización (equivalente a Solver, objetivo = MAD) ---------- */
+function nelderMead(f, x0, lo, hi, opt = {}) {
+  const n = x0.length, maxIter = opt.maxIter || 500, step = opt.step || 0.1;
+  const cl = x => x.map((v, i) => Math.min(hi[i], Math.max(lo[i], v)));
+  let sim = [cl(x0)];
+  for (let i = 0; i < n; i++) { const x = sim[0].slice(); x[i] += step * (hi[i] - lo[i] > 5 ? 1 : (hi[i] - lo[i])) * (x[i] + step > hi[i] ? -1 : 1); sim.push(cl(x)); }
+  let fv = sim.map(f);
+  for (let it = 0; it < maxIter; it++) {
+    const idx = fv.map((v, i) => i).sort((a, b) => fv[a] - fv[b]);
+    sim = idx.map(i => sim[i]); fv = idx.map(i => fv[i]);
+    if (Math.abs(fv[n] - fv[0]) < 1e-9 * (1 + Math.abs(fv[0]))) break;
+    const c = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) c[j] += sim[i][j] / n;
+    const pt = (t) => cl(c.map((v, j) => v + t * (sim[n][j] - v)));
+    const xr = pt(-1), fr = f(xr);
+    if (fr < fv[0]) {
+      const xe = pt(-2), fe = f(xe);
+      if (fe < fr) { sim[n] = xe; fv[n] = fe; } else { sim[n] = xr; fv[n] = fr; }
+    } else if (fr < fv[n - 1]) { sim[n] = xr; fv[n] = fr; }
+    else {
+      const xc = pt(fr < fv[n] ? -0.5 : 0.5), fc = f(xc);
+      if (fc < Math.min(fr, fv[n])) { sim[n] = xc; fv[n] = fc; }
+      else { for (let i = 1; i <= n; i++) { sim[i] = cl(sim[i].map((v, j) => sim[0][j] + 0.5 * (v - sim[0][j]))); fv[i] = f(sim[i]); } }
+    }
+  }
+  let b = 0; for (let i = 1; i <= n; i++) if (fv[i] < fv[b]) b = i;
+  return { x: sim[b], f: fv[b] };
+}
+
+function optSES(y) {
+  let best = { al: 0.1, v: Infinity };
+  for (let a = 0.01; a <= 1.0001; a += 0.01) { const v = madOf(y, mSES(y, a).fitted); if (v < best.v) best = { al: a, v }; }
+  return best.al;
+}
+function optPM(y, maxN) {
+  let best = { N: 2, v: Infinity };
+  for (let N = 2; N <= Math.min(maxN, y.length - 2); N++) { const v = madOf(y, mPM(y, N).fitted); if (v < best.v) best = { N, v }; }
+  return best.N;
+}
+function optHolt(y) {
+  const G = [0.02, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9];
+  let best = { x: [0.2, 0.2], v: Infinity };
+  for (const a of G) for (const b of G) { const v = madOf(y, mHolt(y, a, b).fitted); if (v < best.v) best = { x: [a, b], v }; }
+  const r = nelderMead(x => madOf(y, mHolt(y, x[0], x[1]).fitted), best.x, [0, 0], [1, 1], { maxIter: 300, step: 0.1 });
+  return r.x;
+}
+function optWinters(y, m, variant) {
+  const G = [0.05, 0.1, 0.2, 0.35, 0.5, 0.7, 0.9];
+  let best = { x: [0.2, 0.1, 0.1], v: Infinity };
+  for (const a of G) for (const b of G) for (const g of G) {
+    const v = madOf(y, mWinters(y, m, a, b, g, null, variant).fitted); if (v < best.v) best = { x: [a, b, g], v };
+  }
+  const r = nelderMead(x => madOf(y, mWinters(y, m, x[0], x[1], x[2], null, variant).fitted), best.x, [0, 0, 0], [1, 1, 1], { maxIter: 400, step: 0.08 });
+  return r.x;
+}
+function optWintersFull(y, m, variant) {
+  const mu = mean(y), o = ols(y), S0 = seasonalIdx(y, m);
+  const base = optWinters(y, m, variant);
+  const unpack = x => {
+    let S = x.slice(5); const ms = mean(S); S = S.map(v => Math.max(v / ms, 1e-3));
+    return { al: x[0], be: x[1], ga: x[2], init: { L0: x[3] * mu, T0: x[4] * mu, S } };
+  };
+  const obj = x => { const p = unpack(x); return madOf(y, mWinters(y, m, p.al, p.be, p.ga, p.init, variant).fitted); };
+  let x = [...base, o.a / mu, o.b / mu, ...S0];
+  const lo = [0, 0, 0, 0, -1, ...new Array(m).fill(0.01)], hi = [1, 1, 1, 4, 1, ...new Array(m).fill(5)];
+  let bestF = obj(x);
+  for (const st of [0.1, 0.05, 0.02, 0.1]) {
+    const r = nelderMead(obj, x, lo, hi, { maxIter: 2500, step: st });
+    if (r.f < bestF) { bestF = r.f; x = r.x; }
+  }
+  return unpack(x);
+}
+
+/* ---------- Catálogo de candidatos ---------- */
+const f2 = v => v.toFixed(2);
+const TPL = { al: 0.1, alH: 0.18, beH: 0.2, aW: 0.4, bW: 0.3, gW: 0.1 };
+
+function defs(cfg) {
+  const m = cfg.m, seasonalOK = (y) => m > 1 && y.length >= 2 * m;
+  const need = m > 1 ? `Requiere al menos ${2 * m} datos de ajuste (2 ciclos de ${m})` : 'Requiere un ciclo estacional (defínalo en la configuración)';
+  const Ntpl = m > 1 ? m : 3;
+  const D = [
+    { id: 'prom', name: 'Promedio simple', fam: 'Nivel constante', k: 1, coherent: ['estacionaria'],
+      fit: y => ({ model: mPromedio(y), label: '—' }) },
+    { id: 'pm_tpl', name: `Promedio móvil (N=${Ntpl})`, fam: 'Nivel constante', k: 1, coherent: ['estacionaria'],
+      fit: y => y.length > Ntpl + 1 ? ({ model: mPM(y, Ntpl), label: `N=${Ntpl}` }) : ({ na: 'Pocos datos para esta ventana' }) },
+    { id: 'pm_opt', name: 'Promedio móvil optimizado', fam: 'Nivel constante', k: 2, coherent: ['estacionaria'], opt: true,
+      fit: y => { if (y.length < 6) return { na: 'Pocos datos' }; const N = optPM(y, 36); return { model: mPM(y, N), label: `N=${N}` }; } },
+    { id: 'tend', name: 'Tendencia lineal (regresión)', fam: 'Tendencia', k: 2, coherent: ['tendencia'],
+      fit: y => { const o = ols(y); return { model: mTend(y), label: `a=${o.a.toFixed(0)}, b=${o.b.toFixed(1)}` }; } },
+    { id: 'tm_per', name: 'Tasa media de crecimiento (período a período)', fam: 'Crecimiento porcentual', k: 1, coherent: ['tendencia'],
+      fit: y => { if (y.length < 6) return { na: 'Pocos datos' }; const o = mTasaPer(y); return { model: o, label: `g=${(o.g * 100).toFixed(2)} % por período` }; } },
+    { id: 'tm_anual', name: 'Tasa media anual (mismo período del ciclo anterior)', fam: 'Crecimiento porcentual', k: 2, coherent: ['tendencia+estacional', 'estacional'], seasonal: true,
+      fit: y => { if (!(m > 1 && y.length >= 2 * m)) return { na: need }; const o = mTasaAnual(y, m); return { model: o, label: `g=${(o.g * 100).toFixed(1)} % por ciclo` }; } },
+    { id: 'ses_tpl', name: 'Suavización exponencial simple', fam: 'Nivel adaptativo', k: 1, coherent: ['estacionaria'],
+      fit: y => ({ model: mSES(y, TPL.al), label: `α=${f2(TPL.al)}` }) },
+    { id: 'ses_opt', name: 'Suavización exponencial simple optimizada', fam: 'Nivel adaptativo', k: 2, coherent: ['estacionaria'], opt: true,
+      fit: y => { const a = optSES(y); return { model: mSES(y, a), label: `α=${f2(a)}` }; } },
+    { id: 'holt_tpl', name: 'Holt (tendencia adaptativa)', fam: 'Tendencia adaptativa', k: 2, coherent: ['tendencia'],
+      fit: y => ({ model: mHolt(y, TPL.alH, TPL.beH), label: `α=${f2(TPL.alH)}, β=${f2(TPL.beH)}` }) },
+    { id: 'holt_opt', name: 'Holt optimizado', fam: 'Tendencia adaptativa', k: 4, coherent: ['tendencia'], opt: true,
+      fit: y => { const x = optHolt(y); return { model: mHolt(y, x[0], x[1]), label: `α=${f2(x[0])}, β=${f2(x[1])}` }; } },
+    { id: 'te', name: 'Tendencia y estacionalidad', fam: 'Estacional', k: 2 + Math.max(m - 1, 0), coherent: ['tendencia+estacional', 'estacional'], seasonal: true,
+      fit: y => seasonalOK(y) ? ({ model: mTE(y, m), label: `${m} índices` }) : ({ na: need }) },
+    { id: 'w_tpl', name: 'Winters (parámetros de la plantilla)', fam: 'Estacional adaptativo', k: 2 + Math.max(m - 1, 0), coherent: ['tendencia+estacional', 'estacional'], seasonal: true,
+      fit: (y, c) => seasonalOK(y) ? ({ model: mWinters(y, m, TPL.aW, TPL.bW, TPL.gW, null, c.variant), label: `α=${f2(TPL.aW)}, β=${f2(TPL.bW)}, γ=${f2(TPL.gW)}` }) : ({ na: need }) },
+    { id: 'w_opt', name: 'Winters optimizado', fam: 'Estacional adaptativo', k: 5 + Math.max(m - 1, 0), coherent: ['tendencia+estacional', 'estacional'], seasonal: true, opt: true,
+      fit: (y, c) => { if (!seasonalOK(y)) return { na: need }; const x = optWinters(y, m, c.variant); return { model: mWinters(y, m, x[0], x[1], x[2], null, c.variant), label: `α=${f2(x[0])}, β=${f2(x[1])}, γ=${f2(x[2])}` }; } },
+    { id: 'w_full', name: 'Winters con Solver completo ("Mejor pronóstico")', fam: 'Estacional adaptativo', k: 5 + Math.max(m - 1, 0) + m + 1, coherent: ['tendencia+estacional', 'estacional'], seasonal: true, opt: true, heavy: true,
+      fit: (y, c) => { if (!seasonalOK(y)) return { na: need }; const p = optWintersFull(y, m, c.variant); return { model: mWinters(y, m, p.al, p.be, p.ga, p.init, c.variant), label: `α=${f2(p.al)}, β=${f2(p.be)}, γ=${f2(p.ga)} + iniciales` }; } },
+  ];
+  if (cfg.manual && cfg.manual.on) {
+    const mm = cfg.manual, t = mm.type;
+    D.push({ id: 'manual', name: 'Escenario manual del grupo', fam: 'Manual', k: t === 'winters' ? 5 + Math.max(m - 1, 0) : t === 'holt' ? 4 : 2, coherent: [], manual: true,
+      fit: (y, c) => {
+        if (t === 'ses') return { model: mSES(y, mm.al), label: `SES α=${f2(mm.al)}` };
+        if (t === 'pm') return y.length > mm.N + 1 ? { model: mPM(y, mm.N), label: `PM N=${mm.N}` } : { na: 'Pocos datos' };
+        if (t === 'holt') return { model: mHolt(y, mm.al, mm.be), label: `Holt α=${f2(mm.al)}, β=${f2(mm.be)}` };
+        if (!seasonalOK(y)) return { na: need };
+        return { model: mWinters(y, m, mm.al, mm.be, mm.ga, null, c.variant), label: `Winters α=${f2(mm.al)}, β=${f2(mm.be)}, γ=${f2(mm.ga)}` };
+      } });
+  }
+  return D;
+}
+
+/* ---------- Diagnóstico del patrón ---------- */
+function diagnose(y, m) {
+  const n = y.length, o = ols(y), mu = mean(y);
+  const sd = Math.sqrt(mean(y.map(v => (v - mu) ** 2)));
+  const trendSig = Math.abs(o.t) > 2;
+  const slopePct = mu ? o.b / mu * 100 : 0;
+  let seasonal = null;
+  if (m > 1 && n >= 2 * m) {
+    const S = seasonalIdx(y, m);
+    const te = mTE(y, m).fitted;
+    let sse = 0; for (let i = 0; i < n; i++) sse += (y[i] - te[i]) ** 2;
+    const strength = o.sse ? Math.max(0, 1 - sse / o.sse) : 0;
+    seasonal = { S, strength, max: Math.max(...S), min: Math.min(...S), imax: S.indexOf(Math.max(...S)), imin: S.indexOf(Math.min(...S)), isSeasonal: strength > 0.3 };
+  }
+  let pattern = 'estacionaria';
+  if (seasonal?.isSeasonal && trendSig) pattern = 'tendencia+estacional';
+  else if (seasonal?.isSeasonal) pattern = 'estacional';
+  else if (trendSig) pattern = 'tendencia';
+  return { n, mean: mu, sd, cv: mu ? sd / mu : 0, ols: o, trendSig, slopePct, seasonal, pattern };
+}
+
+/* ---------- Simulación completa ---------- */
+function runSimulation(y, cfg) {
+  const n = y.length, h = cfg.holdout, nt = n - h;
+  const train = y.slice(0, nt), test = y.slice(nt);
+  const out = [];
+  for (const d of defs(cfg)) {
+    const c = { variant: cfg.variant };
+    const r = { id: d.id, name: d.name, fam: d.fam, k: d.k, coherent: d.coherent, opt: !!d.opt, manual: !!d.manual };
+    const full = d.fit(y, c);
+    if (full.na) { r.na = full.na; out.push(r); continue; }
+    let tr = null;
+    if (h > 0) { tr = d.fit(train, c); if (tr.na) { r.na = tr.na; out.push(r); continue; } }
+    const basis = tr || full;
+    r.paramsTrain = basis.label; r.paramsFull = full.label;
+    r.inS = metrics(tr ? train : y, basis.model.fitted);
+    r.val = h > 0 ? metrics(test, tr.model.fc(h)) : null;
+    r.valFc = h > 0 ? tr.model.fc(h) : null;
+    r.fittedFull = full.model.fitted;
+    r.future = full.model.fc(cfg.horizon);
+    out.push(r);
+  }
+  return out;
+}
+
+function selectBest(cands, cfg) {
+  const hasVal = cfg.holdout > 0;
+  const basis = c => hasVal ? c.val : c.inS;
+  const crit = c => basis(c)[cfg.criterion];
+  const pool = cands.filter(c => !c.na && isFinite(crit(c)));
+  if (!pool.length) return null;
+  const elig = pool; const noBiasOk = false;
+  const sorted = pool.slice().sort((a, b) => crit(a) - crit(b));
+  const bestRaw = elig.slice().sort((a, b) => crit(a) - crit(b))[0];
+  let pick = bestRaw, byParsimony = false;
+  if (cfg.parsimony) {
+    const within = elig.filter(c => crit(c) <= crit(bestRaw) * 1.05).sort((a, b) => a.k - b.k || crit(a) - crit(b));
+    if (within[0] && within[0].id !== bestRaw.id) { pick = within[0]; byParsimony = true; }
+  }
+  return { pick, bestRaw, byParsimony, noBiasOk, sorted, basisName: hasVal ? 'validación' : 'ajuste' };
+}
+
+if (false) module.exports = { mTasaPer, mTasaAnual, mean, ols, seasonalIdx, metrics, mPromedio, mPM, mTend, mSES, mHolt, mTE, mWinters, optWintersFull, runSimulation, selectBest, diagnose, defs, TPL };
+
+/* ===================== CONFIGURACIÓN ===================== */
+// Para que los grupos envíen sus resultados a una hoja de Google, pegue aquí la URL de la
+// aplicación web de Apps Script (termina en /exec) y la misma clave definida en Code.gs.
+// Si ENDPOINT queda vacío, el botón de envío no se muestra y solo se ofrece la descarga a Excel.
+const CONFIG = { ENDPOINT: 'https://script.google.com/macros/s/AKfycbyBhw8CFmGJaAWqRaHRTToFQ9l6oPKSMaWBMnKlLyvRfUO07i6hqJGUjbV1aWOzcVzzLg/exec', TOKEN: '' };
+async function saveFile(name, blob) { try { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); return true; } catch (e) { return false; } }
+/* ===================== APLICACIÓN ===================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt0 = v => isFinite(v) ? Math.round(v).toLocaleString('es-PE') : '—';
+const fmt1 = v => isFinite(v) ? v.toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : '—';
+const fmt2 = v => isFinite(v) ? v.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+const COLORS = ['#0B5D7A', '#E4572E', '#17A398', '#8E44AD', '#D4A017', '#5B8E3E', '#D1477A', '#3B6FD4', '#8C6D46', '#2E9CCA', '#C0392B', '#6C7A89', '#1B998B'];
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre'];
+const CRIT = { mad: 'MAD', rmse: 'RMSE', mape: 'MAPE' };
+
+const S = { labels: [], dates: null, y: [], cfg: null, cands: [], sel: null, diag: null, shown: new Set(), colors: {}, workbooks: null, srcName: '' };
+
+/* ---------- lectura de datos ---------- */
+function toNum(v) {
+  if (typeof v === 'number') return v;
+  if (v instanceof Date || v == null) return NaN;
+  let s = String(v).trim().replace(/\s/g, '');
+  if (!s) return NaN;
+  if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+  else if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, '');
+  else s = s.replace(',', '.');
+  return /^-?\d*\.?\d+(e[+-]?\d+)?$/i.test(s) ? parseFloat(s) : NaN;
+}
+const serialToDate = s => new Date(Math.round((s - 25569) * 86400000));
+function msg(html, cls) { $('dataMsg').innerHTML = html ? `<div class="msg ${cls || ''}">${html}</div>` : ''; }
+
+function loadWorkbook(buf, name) {
+  try {
+    const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+    S.workbooks = wb; S.srcName = name;
+    const sel = $('selSheet'); sel.innerHTML = wb.SheetNames.map(n => `<option>${esc(n)}</option>`).join('');
+    $('sheetWrap').classList.toggle('hidden', wb.SheetNames.length < 2);
+    const pref = wb.SheetNames.find(n => /^data$|datos|demanda|ventas/i.test(n)) || wb.SheetNames[0];
+    sel.value = pref; readSheet();
+  } catch (e) { msg('No se pudo leer el archivo. Verifique que sea un Excel o CSV válido.', 'err'); }
+}
+
+function readSheet() {
+  const ws = S.workbooks.Sheets[$('selSheet').value];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null }).filter(r => r.some(c => c !== null && c !== ''));
+  if (!rows.length) { msg('La hoja está vacía.', 'err'); return; }
+  const first = rows[0];
+  const hasHeader = first.some(c => typeof c === 'string' && isNaN(toNum(c)));
+  const heads = first.map((c, i) => hasHeader && c != null && c !== '' ? String(c) : `Columna ${String.fromCharCode(65 + i)}`);
+  const body = hasHeader ? rows.slice(1) : rows;
+  const ncol = Math.max(...rows.map(r => r.length));
+  const cols = [];
+  for (let j = 0; j < ncol; j++) {
+    let num = 0, dat = 0;
+    body.forEach(r => { const v = r[j]; if (v instanceof Date) dat++; else if (isFinite(toNum(v))) num++; });
+    cols.push({ j, head: heads[j] || `Columna ${String.fromCharCode(65 + j)}`, num, dat, tot: body.length });
+  }
+  S.sheet = { body, cols };
+  const numCols = cols.filter(c => c.num >= 0.6 * c.tot);
+  const reDem = /venta|demanda|sales|demand|unidad|cantidad|consumo|pedido/i, reLab = /mes|fecha|per[ií]odo|date|month|semana|trimestre|d[ií]a/i;
+  let dem = numCols.find(c => reDem.test(c.head)) || numCols.filter(c => !reLab.test(c.head)).pop() || numCols.pop();
+  let lab = cols.find(c => c !== dem && (reLab.test(c.head) || c.dat >= 0.6 * c.tot)) || cols.find(c => c !== dem && c.num < 0.6 * c.tot);
+  $('selDem').innerHTML = cols.map(c => `<option value="${c.j}">${esc(c.head)}</option>`).join('');
+  $('selLab').innerHTML = `<option value="-1">(Numerar períodos 1, 2, 3…)</option>` + cols.map(c => `<option value="${c.j}">${esc(c.head)}</option>`).join('');
+  if (dem) $('selDem').value = dem.j; $('selLab').value = lab ? lab.j : -1;
+  $('mapBox').classList.remove('hidden');
+  applyMapping();
+}
+
+function applyMapping() {
+  const dj = +$('selDem').value, lj = +$('selLab').value, { body } = S.sheet;
+  const vals = [], labs = [], dts = []; let skipped = 0;
+  body.forEach(r => {
+    const v = toNum(r[dj]);
+    if (!isFinite(v)) { skipped++; return; }
+    vals.push(v);
+    let L = lj >= 0 ? r[lj] : null, d = null;
+    if (L instanceof Date) d = L;
+    else if (typeof L === 'number' && L > 20000 && L < 80000) d = serialToDate(L);
+    else if (typeof L === 'string' && /^\d{4}-\d{2}(-\d{2})?/.test(L)) { const t = new Date(L); if (!isNaN(t)) d = t; }
+    dts.push(d); labs.push(L == null ? null : String(L));
+  });
+  setData(vals, labs, dts, skipped);
+}
+
+function parsePaste(txt) {
+  const vals = [], labs = [], dts = []; let skipped = 0;
+  txt.split(/\r?\n/).map(l => l.trim()).filter(Boolean).forEach(l => {
+    const t = l.split(/[\t;]+/).map(x => x.trim()).filter(x => x !== '');
+    const v = toNum(t[t.length - 1]);
+    if (!isFinite(v)) { skipped++; return; }
+    vals.push(v); labs.push(t.length > 1 ? t[0] : null); dts.push(null);
+  });
+  S.srcName = 'Datos pegados'; $('mapBox').classList.add('hidden');
+  setData(vals, labs, dts, skipped);
+}
+
+const fmtDate = (d, step) => step === 'd' ? d.toLocaleDateString('es-PE', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'UTC' }) : d.toLocaleDateString('es-PE', { month: 'short', year: '2-digit', timeZone: 'UTC' }).replace('.', '');
+function dateStep(dts) {
+  if (!dts.length || dts.some(d => !d)) return null;
+  const g = []; for (let i = 1; i < dts.length; i++) g.push((dts[i] - dts[i - 1]) / 86400000);
+  g.sort((a, b) => a - b); const md = g[Math.floor(g.length / 2)] || 0;
+  if (md >= 27 && md <= 32) return { k: 'm', add: 1 };
+  if (md >= 88 && md <= 93) return { k: 'm', add: 3 };
+  if (md >= 6 && md <= 8) return { k: 'd', add: 7 };
+  if (md >= 0.9 && md <= 1.1) return { k: 'd', add: 1 };
+  return null;
+}
+
+function setData(vals, labs, dts, skipped) {
+  S.y = vals; S.results = null;
+  const n = vals.length, allDates = dts.length && dts.every(d => d), st = allDates ? dateStep(dts) : null;
+  S.step = st; S.dates = allDates ? dts : null;
+  S.labels = vals.map((_, i) => allDates ? fmtDate(dts[i], st ? st.k : 'm') : (labs[i] != null ? String(labs[i]) : `P${i + 1}`));
+  const warn = [];
+  if (skipped) warn.push(`Se omitieron ${skipped} filas sin valor numérico.`);
+  if (vals.some(v => v < 0)) warn.push('Hay valores negativos; una demanda no debería serlo.');
+  if (n < 8) { msg(`Se leyeron solo ${n} datos. Se necesitan al menos 8 para simular.`, 'err'); S.y = []; renderPreview(); updateRun(); return; }
+  msg(`${n} datos leídos de «${esc(S.srcName)}».${warn.length ? ' ' + warn.join(' ') : ''}`, warn.length ? 'warn' : 'ok');
+  // sugerir ciclo
+  let m = 12;
+  if (st) m = st.k === 'm' ? (st.add === 3 ? 4 : 12) : (st.add === 7 ? (n >= 104 ? 52 : 1) : 7);
+  setCycle(m);
+  autoHold();
+  $('hor').value = Math.max(1, Math.min(getM() > 1 ? getM() : 6, 24));
+  renderPreview(); updateRun();
+}
+
+function setCycle(m) {
+  const opts = [...$('cycle').options].map(o => +o.value);
+  if (opts.includes(m)) { $('cycle').value = m; $('cycleN').classList.add('hidden'); }
+  else { $('cycle').value = 0; $('cycleN').value = m; $('cycleN').classList.remove('hidden'); }
+}
+function getM() { const v = +$('cycle').value; return v === 0 ? Math.max(1, Math.round(+$('cycleN').value || 1)) : v; }
+function autoHold() {
+  const n = S.y.length, m = getM();
+  let h = Math.min(m > 1 ? m : 6, Math.floor(n / 4));
+  h = Math.max(0, Math.min(h, n - 8)); if (n >= 12) h = Math.max(h, 3);
+  $('hold').value = h;
+}
+function updateRun() {
+  const ok = S.y.length >= 8;
+  $('btnRun').disabled = !ok; $('runHint').textContent = ok ? `${S.y.length} datos listos.` : 'Cargue datos para habilitar la simulación.';
+}
+
+function renderPreview() {
+  const y = S.y, has = y.length >= 8;
+  $('prevEmpty').classList.toggle('hidden', has); $('prevBody').classList.toggle('hidden', !has);
+  if (!has) return;
+  const mu = mean(y);
+  $('stats').innerHTML = [[y.length, 'períodos'], [fmt0(mu), 'promedio'], [fmt0(Math.min(...y)), 'mínimo'], [fmt0(Math.max(...y)), 'máximo']].map(([a, b]) => `<div class="stat"><b>${a}</b><span>${b}</span></div>`).join('');
+  const W = 400, H = 110, mx = Math.max(...y) * 1.05 || 1;
+  const pts = y.map((v, i) => `${(6 + i / (y.length - 1) * (W - 12)).toFixed(1)},${(H - 8 - v / mx * (H - 16)).toFixed(1)}`).join(' ');
+  $('spark').innerHTML = `<polyline points="${pts}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linejoin="round"/><line x1="6" x2="${W - 6}" y1="${H - 8}" y2="${H - 8}" stroke="var(--line)"/><text x="6" y="${H - 0.5}">${esc(S.labels[0])}</text><text x="${W - 6}" y="${H - 0.5}" text-anchor="end">${esc(S.labels[y.length - 1])}</text>`;
+}
+
+/* ---------- eventos de carga ---------- */
+$('drop').onclick = () => $('file').click();
+$('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } };
+['dragenter', 'dragover'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('on'); }));
+['dragleave', 'drop'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.remove('on'); }));
+$('drop').addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+$('file').onchange = e => { if (e.target.files[0]) readFile(e.target.files[0]); };
+function readFile(f) { const r = new FileReader(); r.onload = () => loadWorkbook(r.result, f.name); r.readAsArrayBuffer(f); }
+$('selSheet').onchange = readSheet; $('selDem').onchange = applyMapping; $('selLab').onchange = applyMapping;
+$('btnPasteToggle').onclick = () => $('pasteBox').classList.toggle('hidden');
+$('btnPaste').onclick = () => parsePaste($('paste').value);
+$('btnSample').onclick = () => {
+  const y = [2000, 3000, 3000, 3000, 4000, 6000, 7000, 6000, 10000, 12000, 14000, 8000, 3000, 4000, 3000, 5000, 5000, 8000, 3000, 8000, 12000, 12000, 16000, 10000, 2000, 5000, 5000, 3000, 4000, 6000, 7000, 10000, 15000, 15000, 18000, 8000, 5000, 4000, 4000, 2000, 5000, 7000, 10000, 14000, 16000, 16000, 20000, 12000, 5000, 2000, 3000, 2000, 7000, 6000, 8000, 10000, 20000, 20000, 22000, 8000];
+  S.srcName = 'Datos de la plantilla (60 meses)'; $('mapBox').classList.add('hidden');
+  const dts = y.map((_, i) => new Date(Date.UTC(2005, i, 1)));
+  setData(y, y.map(() => null), dts, 0);
+};
+$('btnTpl').onclick = async () => {
+  const aoa = [['Período', 'Demanda'], ['ene-25', 1200], ['feb-25', 1350], ['mar-25', 1280], ['(borre estas filas de ejemplo y pegue su demanda proyectada; una fila por período)', '']];
+  const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 22 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, ws, 'Data');
+  await saveFile('Formato_carga_demanda.xlsx', new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: XLSX_MIME }));
+};
+$('cycle').onchange = () => { $('cycleN').classList.toggle('hidden', $('cycle').value !== '0'); if (S.y.length) autoHold(); };
+$('cycleN').oninput = () => { if (S.y.length) autoHold(); };
+$('manOn').onchange = () => $('manBox').classList.toggle('hidden', !$('manOn').checked);
+function manUI() {
+  const t = $('manType').value;
+  $('sAl').classList.toggle('hidden', t === 'pm'); $('sBe').classList.toggle('hidden', t === 'ses' || t === 'pm');
+  $('sGa').classList.toggle('hidden', t !== 'winters'); $('sN').classList.toggle('hidden', t !== 'pm');
+}
+$('manType').onchange = manUI; manUI();
+[['rAl', 'oAl', 2], ['rBe', 'oBe', 2], ['rGa', 'oGa', 2], ['rN', 'oN', 0]].forEach(([r, o, d]) => $(r).oninput = () => $(o).textContent = (+$(r).value).toFixed(d));
+
+/* ---------- simulación ---------- */
+$('btnRun').onclick = () => {
+  const b = $('btnRun'); b.disabled = true; b.innerHTML = '<span class="spin"></span> Simulando…';
+  setTimeout(() => {
+    try { run(); } catch (e) { console.error(e); msg('Ocurrió un error durante la simulación: ' + esc(e.message), 'err'); }
+    b.disabled = false; b.textContent = 'Ejecutar simulación';
+  }, 30);
+};
+
+function run() {
+  const n = S.y.length, m = getM();
+  let h = Math.max(0, Math.round(+$('hold').value || 0)), H = Math.max(1, Math.min(60, Math.round(+$('hor').value || 12)));
+  if (n - h < 8) { h = Math.max(0, n - 8); $('hold').value = h; }
+  const cfg = { m, holdout: h, horizon: H, criterion: $('crit').value, parsimony: $('pars').checked, variant: $('variant').value,
+    manual: { on: $('manOn').checked, type: $('manType').value, al: +$('rAl').value, be: +$('rBe').value, ga: +$('rGa').value, N: +$('rN').value } };
+  S.runId = newId();
+  $('sendMsg').textContent = '';
+  S.cfg = cfg; S.diag = diagnose(S.y, m);
+  S.cands = runSimulation(S.y, cfg); S.sel = selectBest(S.cands, cfg);
+  if (!S.sel) { msg('Ningún modelo pudo evaluarse con estos datos. Revise la configuración.', 'err'); return; }
+  S.futLabels = makeFuture(H);
+  S.cands.forEach((c, i) => S.colors[c.id] = COLORS[i % COLORS.length]);
+  const ranked = S.sel.sorted, top = [S.sel.pick.id]; const r2 = ranked.find(c => c.id !== S.sel.pick.id); if (r2) top.push(r2.id);
+  const bench = S.cands.find(c => c.id === 'prom'); if (bench && !top.includes('prom') && false) top.push('prom');
+  S.shown = new Set(top);
+  S.just = buildJust();
+  $('resultados').classList.remove('hidden');
+  renderVerdict(); renderTable(); renderChips(); drawMain(); drawResid(); renderFc(); renderJust();
+  $('resultados').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function makeFuture(H) {
+  const n = S.y.length, out = [];
+  if (S.dates && S.step) {
+    const last = S.dates[n - 1];
+    for (let k = 1; k <= H; k++) {
+      const d = S.step.k === 'm' ? new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() + S.step.add * k, last.getUTCDate())) : new Date(last.getTime() + S.step.add * k * 86400000);
+      out.push(fmtDate(d, S.step.k));
+    }
+  } else if (S.labels.every((l, i) => l === `P${i + 1}`)) for (let k = 1; k <= H; k++) out.push(`P${n + k}`);
+  else for (let k = 1; k <= H; k++) out.push(`+${k}`);
+  return out;
+}
+const basisM = c => S.cfg.holdout > 0 ? c.val : c.inS;
+const critV = c => basisM(c)[S.cfg.criterion];
+const fmtCrit = v => S.cfg.criterion === 'mape' ? fmt1(v) + ' %' : fmt0(v);
+
+/* ---------- resultado: veredicto ---------- */
+function coherent(c) { return c.manual ? null : c.coherent.includes(S.diag.pattern); }
+const PATLBL = { 'estacionaria': 'nivel estable sin tendencia ni estacionalidad', 'tendencia': 'tendencia sin estacionalidad', 'tendencia+estacional': 'tendencia con estacionalidad', 'estacional': 'estacionalidad sin tendencia clara' };
+function renderVerdict() {
+  const p = S.sel.pick, hasVal = S.cfg.holdout > 0, co = coherent(p), b = basisM(p);
+  const tags = [`<span class="tag">Modelo recomendado</span>`];
+  if (co === true) tags.push('<span class="tag g">Coherente con el patrón</span>');
+  if (co === false) tags.push('<span class="tag w">No coincide con el patrón</span>');
+  if (S.sel.byParsimony) tags.push('<span class="tag p">Elegido por parsimonia</span>');
+  $('verdict').innerHTML = `<div class="verdict"><div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${tags.join('')}</div>
+    <h3>${esc(p.name)}</h3>
+    <p class="muted" style="margin:0 0 10px">Parámetros: ${esc(p.paramsFull)}</p>
+    <p style="margin:0;max-width:60ch">Patrón detectado en los datos: <b>${PATLBL[S.diag.pattern]}</b>. ${esc(S.just.headline)}</p></div>
+    <div class="kpis">
+      <div class="kpi"><b>${fmtCrit(critV(p))}</b><span>${CRIT[S.cfg.criterion]} en ${hasVal ? 'validación' : 'ajuste'}</span></div>
+      <div class="kpi"><b>${fmt2(b.ts)}</b><span>señal de rastreo</span></div>
+      <div class="kpi"><b>${fmt0(p.inS.mad)}</b><span>MAD de ajuste</span></div>
+      <div class="kpi"><b>${fmt0(p.future.reduce((a, v) => a + v, 0))}</b><span>demanda total próx. ${S.cfg.horizon} períodos</span></div>
+    </div></div>`;
+}
+
+/* ---------- tabla ---------- */
+function alerts(c) {
+  const a = [], b = basisM(c);
+  if (S.cfg.holdout > 0 && c.inS.mad > 0 && c.val.mad / c.inS.mad > 1.5) a.push(c.opt ? '<span class="tag w">Sobreajuste</span>' : '<span class="tag w">Peor en validación</span>');
+  if (Math.abs(b.ts) > 4) a.push(`<span class="tag ${b.ts > 0 ? 'w' : 'b'}">${b.ts > 0 ? 'Subestima' : 'Sobreestima'}</span>`);
+  return a.join(' ');
+}
+function renderTable() {
+  const hv = S.cfg.holdout > 0, ranked = S.sel.sorted, na = S.cands.filter(c => c.na);
+  const maxv = Math.max(...ranked.map(critV));
+  let h = `<thead><tr><th class="num">#</th><th>Modelo</th><th class="num">MAD ajuste</th>${hv ? `<th class="barcell">${CRIT[S.cfg.criterion]} validación</th><th class="num">RMSE val.</th><th class="num">MAPE val.</th>` : `<th class="barcell">${CRIT[S.cfg.criterion]} ajuste</th>`}<th class="num">Señal rastreo</th><th class="num">Parám.</th><th>Alertas</th><th>Gráfico</th></tr></thead><tbody>`;
+  ranked.forEach((c, i) => {
+    const pick = c.id === S.sel.pick.id, b = basisM(c);
+    h += `<tr class="${pick ? 'pick' : ''}"><td class="num">${i + 1}</td>
+      <td><div class="mname"><span class="sw" style="background:${S.colors[c.id]}"></span>${esc(c.name)}${pick ? ' <span class="tag">Elegido</span>' : ''}</div><div class="mpar">${esc(c.paramsTrain)}</div></td>
+      <td class="num">${fmt0(c.inS.mad)}</td>
+      <td class="barcell"><b>${fmtCrit(critV(c))}</b><div class="bar"><i style="width:${Math.max(3, critV(c) / maxv * 100)}%"></i></div></td>
+      ${hv ? `<td class="num">${fmt0(c.val.rmse)}</td><td class="num">${fmt1(c.val.mape)} %</td>` : ''}
+      <td class="num">${fmt2(b.ts)}</td><td class="num">${c.k}</td><td>${alerts(c)}</td>
+      <td><input type="checkbox" data-id="${c.id}" ${S.shown.has(c.id) ? 'checked' : ''} aria-label="Mostrar ${esc(c.name)} en el gráfico"></td></tr>`;
+  });
+  na.forEach(c => { h += `<tr class="na"><td class="num">—</td><td><div class="mname">${esc(c.name)}</div><div class="mpar">No aplica: ${esc(c.na)}</div></td><td colspan="${hv ? 8 : 6}"></td></tr>`; });
+  $('tbl').innerHTML = h + '</tbody>';
+  $('tbl').querySelectorAll('input[data-id]').forEach(i => i.onchange = () => { i.checked ? S.shown.add(i.dataset.id) : S.shown.delete(i.dataset.id); renderChips(); drawMain(); });
+  $('tblNote').textContent = hv ? `Ranking por ${CRIT[S.cfg.criterion]} sobre los últimos ${S.cfg.holdout} períodos, que ningún modelo usó para ajustarse. «Parám.» aproxima cuántos valores estima el modelo a partir de los datos.` : 'Sin períodos de validación: el ranking usa el error de ajuste, que favorece a los modelos con más parámetros.';
+}
+
+/* ---------- gráfico principal ---------- */
+const niceMax = v => { const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; };
+const shortName = n => n.replace('Winters (parámetros de la plantilla)', 'Winters (plantilla)').replace('Winters con Solver completo ("Mejor pronóstico")', 'Winters Solver completo').replace('Suavización exponencial simple optimizada', 'SES optimizada').replace('Suavización exponencial simple', 'SES').replace('Tendencia y estacionalidad', 'Tend. + estacional').replace('Tendencia lineal (regresión)', 'Tendencia lineal').replace('Tasa media de crecimiento (período a período)', 'Tasa media (período)').replace('Tasa media anual (mismo período del ciclo anterior)', 'Tasa media anual').replace('Holt (tendencia adaptativa)', 'Holt (plantilla)');
+function renderChips() {
+  $('chips').innerHTML = `<span class="chip" style="cursor:default"><span class="sw" style="background:var(--ink)"></span>Real</span>` +
+    S.cands.filter(c => !c.na).map(c => `<label class="chip"><input type="checkbox" data-c="${c.id}" ${S.shown.has(c.id) ? 'checked' : ''}><span class="sw" style="background:${S.colors[c.id]}"></span>${esc(shortName(c.name))}</label>`).join('');
+  $('chips').querySelectorAll('input').forEach(i => i.onchange = () => { i.checked ? S.shown.add(i.dataset.c) : S.shown.delete(i.dataset.c); drawMain(); const t = $('tbl').querySelector(`input[data-id="${i.dataset.c}"]`); if (t) t.checked = i.checked; });
+}
+function drawMain() {
+  const W = 920, H = 390, ml = 58, mr = 16, mt = 16, mb = 40, y = S.y, n = y.length, Hh = S.cfg.horizon, tot = n + Hh, h = S.cfg.holdout;
+  const shown = S.cands.filter(c => !c.na && S.shown.has(c.id)), pk = S.sel.pick;
+  const sig = 1.25 * (S.cfg.holdout > 0 ? pk.val.mad : pk.inS.mad), band = pk.future.map(v => [Math.max(0, v - 1.96 * sig), v + 1.96 * sig]);
+  let mx = Math.max(...y, ...band.map(b => b[1]));
+  shown.forEach(c => { c.fittedFull.forEach(v => { if (isFinite(v)) mx = Math.max(mx, v); }); c.future.forEach(v => mx = Math.max(mx, v)); });
+  mx = niceMax(mx * 1.04);
+  const X = i => ml + i / (tot - 1) * (W - ml - mr), Y = v => mt + (1 - v / mx) * (H - mt - mb);
+  let g = '';
+  for (let t = 0; t <= 5; t++) { const v = mx * t / 5; g += `<line x1="${ml}" x2="${W - mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${ml - 8}" y="${Y(v) + 4}" text-anchor="end">${fmt0(v)}</text>`; }
+  if (h > 0) g += `<rect x="${X(n - h)}" y="${mt}" width="${X(n - 1) - X(n - h)}" height="${H - mt - mb}" fill="var(--shade)"/><text x="${(X(n - h) + X(n - 1)) / 2}" y="${mt + 12}" text-anchor="middle">validación</text>`;
+  g += `<rect x="${X(n - 1)}" y="${mt}" width="${X(tot - 1) - X(n - 1)}" height="${H - mt - mb}" fill="var(--shade2)"/><text x="${(X(n - 1) + X(tot - 1)) / 2}" y="${mt + 12}" text-anchor="middle">pronóstico</text>`;
+  const allLab = [...S.labels, ...S.futLabels], step = Math.ceil(tot / 9);
+  for (let i = 0; i < tot; i += step) g += `<text x="${X(i)}" y="${H - mb + 18}" text-anchor="middle">${esc(allLab[i])}</text>`;
+  g += `<polygon fill="${S.colors[pk.id]}" opacity=".13" points="${[[n - 1, pk.fittedFull[n - 1] ?? y[n - 1], pk.fittedFull[n - 1] ?? y[n - 1]], ...band.map((b, k) => [n + k, b[0], b[1]])].map(p => `${X(p[0])},${Y(p[2])}`).concat([[n - 1, 0, pk.fittedFull[n - 1] ?? y[n - 1]], ...band.map((b, k) => [n + k, b[0], b[1]])].reverse().map(p => `${X(p[0])},${Y(p[1])}`)).join(' ')}"/>`;
+  const path = (arr, off) => { let d = '', pen = false; arr.forEach((v, i) => { if (!isFinite(v)) { pen = false; return; } d += `${pen ? 'L' : 'M'}${X(i + off).toFixed(1)},${Y(v).toFixed(1)}`; pen = true; }); return d; };
+  shown.forEach(c => {
+    const col = S.colors[c.id], w = c.id === pk.id ? 2.4 : 1.7;
+    g += `<path d="${path(c.fittedFull, 0)}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linejoin="round"/>`;
+    const last = c.fittedFull[n - 1], fut = [isFinite(last) ? last : c.future[0], ...c.future];
+    g += `<path d="${path(fut, n - 1)}" fill="none" stroke="${col}" stroke-width="${w}" stroke-dasharray="5 4"/>`;
+  });
+  g += `<path d="${path(y, 0)}" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"/>`;
+  g += `<line id="cur" x1="0" x2="0" y1="${mt}" y2="${H - mb}" stroke="var(--muted)" stroke-dasharray="3 3" class="hidden"/><rect id="hit" x="${ml}" y="${mt}" width="${W - ml - mr}" height="${H - mt - mb}" fill="transparent"/>`;
+  $('main').innerHTML = g;
+  const svg = $('main'), tip = $('tip');
+  $('hit').onpointermove = e => {
+    const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) / r.width * W, i = Math.max(0, Math.min(tot - 1, Math.round((sx - ml) / (W - ml - mr) * (tot - 1))));
+    const cur = $('cur'); cur.setAttribute('x1', X(i)); cur.setAttribute('x2', X(i)); cur.classList.remove('hidden');
+    let rows = i < n ? `<div><span>Real</span><b>${fmt0(y[i])}</b></div>` : '';
+    shown.forEach(c => { const v = i < n ? c.fittedFull[i] : c.future[i - n]; if (isFinite(v)) rows += `<div><span><span class="sw" style="background:${S.colors[c.id]}"></span>${esc(c.name.slice(0, 26))}</span><b>${fmt0(v)}</b></div>`; });
+    tip.innerHTML = `<b>${esc(allLab[i])}</b>${rows}`; tip.classList.remove('hidden');
+    const bw = $('chartbox').getBoundingClientRect(), left = e.clientX - bw.left + 14;
+    tip.style.left = Math.min(left, bw.width - tip.offsetWidth - 4) + 'px'; tip.style.top = Math.max(0, e.clientY - bw.top - 20) + 'px';
+  };
+  $('hit').onpointerleave = () => { tip.classList.add('hidden'); $('cur').classList.add('hidden'); };
+}
+
+function drawResid() {
+  const pk = S.sel.pick, y = S.y, n = y.length, h = S.cfg.holdout, W = 460, H = 190, ml = 44, mr = 8, mt = 8, mb = 22;
+  const e = y.map((v, i) => isFinite(pk.fittedFull[i]) ? v - pk.fittedFull[i] : NaN);
+  const ev = e.filter(isFinite), mx = niceMax(Math.max(...ev.map(Math.abs)) * 1.05 || 1);
+  const bw = (W - ml - mr) / n, Y = v => mt + (1 - (v + mx) / (2 * mx)) * (H - mt - mb);
+  let g = '';
+  [-mx, 0, mx].forEach(v => g += `<line x1="${ml}" x2="${W - mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v === 0 ? 'var(--muted)' : 'var(--grid)'}"/><text x="${ml - 6}" y="${Y(v) + 4}" text-anchor="end">${fmt0(v)}</text>`);
+  if (h > 0) g += `<rect x="${ml + (n - h) * bw}" y="${mt}" width="${h * bw}" height="${H - mt - mb}" fill="var(--shade)"/>`;
+  e.forEach((v, i) => { if (!isFinite(v)) return; const y0 = Y(0), y1 = Y(v); g += `<rect x="${(ml + i * bw + 0.5).toFixed(1)}" y="${Math.min(y0, y1).toFixed(1)}" width="${Math.max(1, bw - 1).toFixed(1)}" height="${Math.abs(y1 - y0).toFixed(1)}" fill="${v >= 0 ? 'var(--primary)' : 'var(--bad)'}"/>`; });
+  g += `<text x="${ml}" y="${H - 5}">${esc(S.labels[0])}</text><text x="${W - mr}" y="${H - 5}" text-anchor="end">${esc(S.labels[n - 1])}</text>`;
+  $('resid').innerHTML = g;
+}
+
+function renderFc() {
+  const pk = S.sel.pick, sig = 1.25 * (S.cfg.holdout > 0 ? pk.val.mad : pk.inS.mad);
+  $('fcTbl').innerHTML = `<thead><tr><th>Período</th><th class="num">Pronóstico</th><th class="num">Mín. ≈95 %</th><th class="num">Máx. ≈95 %</th></tr></thead><tbody>` +
+    pk.future.map((v, k) => `<tr><td>${esc(S.futLabels[k])}</td><td class="num"><b>${fmt0(v)}</b></td><td class="num">${fmt0(Math.max(0, v - 1.96 * sig))}</td><td class="num">${fmt0(v + 1.96 * sig)}</td></tr>`).join('') + '</tbody>';
+}
+
+/* ---------- justificación automática ---------- */
+function posName(i) {
+  const m = S.cfg.m;
+  if (S.dates && S.step && S.step.k === 'm' && S.step.add === 1 && m === 12) return MESES[(S.dates[0].getUTCMonth() + i) % 12];
+  if (m === 12) return `el mes ${i % 12 + 1} del ciclo`;
+  return `la posición ${i + 1} del ciclo`;
+}
+function buildJust() {
+  const { cfg, diag: d, sel, y } = S, n = y.length, h = cfg.holdout, nt = n - h, pk = sel.pick, hv = h > 0;
+  const ranked = sel.sorted, crit = CRIT[cfg.criterion], cv = critV, F = v => cfg.criterion === 'mape' ? fmt1(v) + ' %' : fmt0(v);
+  const run2 = ranked.find(c => c.id !== pk.id), bench = S.cands.find(c => c.id === 'prom' && !c.na);
+  const na = S.cands.filter(c => c.na), sec = [];
+  // 1 patrón
+  const s1 = [], b1 = [];
+  s1.push(`La serie tiene ${n} períodos (${S.labels[0]} a ${S.labels[n - 1]}), con una demanda promedio de ${fmt0(d.mean)} unidades y una desviación estándar de ${fmt0(d.sd)} (coeficiente de variación de ${fmt0(d.cv * 100)} %).`);
+  b1.push(d.trendSig ? `Tendencia: existe una tendencia ${d.ols.b > 0 ? 'creciente' : 'decreciente'} significativa de ${fmt1(d.ols.b)} unidades por período (${fmt1(d.slopePct)} % del promedio; t = ${fmt1(d.ols.t)}, R² = ${fmt2(d.ols.r2)}).` : `Tendencia: la pendiente de ${fmt1(d.ols.b)} unidades por período no es estadísticamente significativa (t = ${fmt1(d.ols.t)}); no hay evidencia de una tendencia lineal.`);
+  if (d.seasonal) b1.push(`Estacionalidad: ${d.seasonal.isSeasonal ? 'es marcada' : 'es débil'}. El índice más alto es ${fmt2(d.seasonal.max)} (en ${posName(d.seasonal.imax)}) y el más bajo ${fmt2(d.seasonal.min)} (en ${posName(d.seasonal.imin)}). Incorporar los índices reduce el error cuadrático de la tendencia simple en ${fmt0(d.seasonal.strength * 100)} %.`);
+  else b1.push(cfg.m > 1 ? `Estacionalidad: no se pudo evaluar porque se necesitan al menos ${2 * cfg.m} períodos (dos ciclos de ${cfg.m}).` : 'Estacionalidad: se indicó que la serie no tiene ciclo estacional.');
+  const fam = { 'estacionaria': 'promedio simple, promedio móvil y suavización exponencial simple', 'tendencia': 'tendencia lineal, tasa media de crecimiento y Holt', 'tendencia+estacional': 'tendencia y estacionalidad, tasa media anual y Winters', 'estacional': 'tendencia y estacionalidad, tasa media anual y Winters' }[d.pattern];
+  const a1 = [`El patrón dominante es ${PATLBL[d.pattern]}. Según los supuestos de la plantilla, los modelos coherentes con ese patrón son: ${fam}.`];
+  sec.push({ t: 'Qué muestran los datos', p: s1, b: b1, a: a1 });
+  // 2 método
+  const s2 = [];
+  s2.push(hv ? `Cada modelo se ajustó con los primeros ${nt} períodos y se puso a prueba pronosticando los ${h} siguientes, que el modelo no vio. Los modelos optimizados buscan sus parámetros minimizando el MAD, igual que el Solver de la plantilla. El criterio de decisión fue el ${crit} en validación.` : `No se reservaron períodos de validación, por lo que el ranking usa el error de ajuste. Esto favorece a los modelos con más parámetros y conviene interpretarlo con cautela.`);
+  s2.push(`Se compararon ${ranked.length} alternativas${na.length ? `; ${na.length} no aplicaron (${na.map(c => c.name).join(', ')}) por falta de datos` : ''}.`);
+  sec.push({ t: 'Cómo se simuló', p: s2 });
+  // 3 resultados
+  sec.push({ t: 'Resultado de la comparación', b: ranked.slice(0, 3).map((c, i) => `${i + 1}.º ${c.name} (${c.paramsTrain}): ${crit} de ${hv ? 'validación' : 'ajuste'} = ${F(cv(c))}; MAD de ajuste = ${fmt0(c.inS.mad)}; señal de rastreo = ${fmt2(basisM(c).ts)}.`) });
+  // 4 decisión
+  const b4 = [], bt = basisM(pk);
+  if (sel.byParsimony) {
+    const br = sel.bestRaw, gap = (cv(pk) / cv(br) - 1) * 100;
+    b4.push(`Precisión: ${br.name} logró el menor ${crit} (${F(cv(br))}), pero ${pk.name} queda a solo ${fmt1(gap)} % (dentro de la tolerancia de 5 %) y estima ${Math.max(0, br.k - pk.k)} parámetros menos. Con series cortas se prefiere el modelo más simple porque es más estable.`);
+  } else {
+    b4.push(`Precisión: obtuvo el menor ${crit} en ${sel.basisName} (${F(cv(pk))}).` + (run2 ? ` ${run2.name} quedó segundo con ${F(cv(run2))}, un ${fmt1((cv(run2) / cv(pk) - 1) * 100)} % más de error.` : ''));
+  }
+  if (bench && bench.id !== pk.id) { const red = (1 - cv(pk) / cv(bench)) * 100; b4.push(red > 0 ? `Valor agregado: frente al promedio simple (el pronóstico más elemental) reduce el ${crit} en ${fmt0(red)} %.` : `Valor agregado: no mejora al promedio simple; los datos no muestran un patrón que un modelo más complejo pueda aprovechar.`); }
+  const co = coherent(pk);
+  if (co === true) b4.push(`Coherencia: el modelo está diseñado para el patrón detectado (${PATLBL[d.pattern]}), de modo que sus supuestos se cumplen.`);
+  if (co === false) b4.push(`Coherencia: el patrón detectado es ${PATLBL[d.pattern]}, que este modelo no captura por diseño. Gana por su desempeño numérico, pero conviene explicar por qué se acepta esa diferencia.`);
+  b4.push(`Sesgo: la señal de rastreo es ${fmt2(bt.ts)} ${Math.abs(bt.ts) <= 4 ? '(dentro de ±4; no hay sesgo sistemático).' : `(fuera de ±4; el modelo tiende a ${bt.ts > 0 ? 'subestimar' : 'sobreestimar'} la demanda).`}`);
+  if (hv && pk.inS.mad > 0) { const r = pk.val.mad / pk.inS.mad; b4.push(`Estabilidad: el MAD en validación es ${fmt2(r)} veces el de ajuste${r > 1.5 ? ', señal de que el modelo generaliza peor de lo que ajusta.' : ', un deterioro razonable para datos nuevos.'}`); }
+  sec.push({ t: `Decisión: ${pk.name}`, p: [`Se recomienda ${pk.name} con ${pk.paramsFull}, reestimado con los ${n} datos disponibles.`], b: b4 });
+  // 5 riesgos
+  const b5 = [];
+  const over = hv ? ranked.filter(c => c.id !== pk.id && c.inS.mad < pk.inS.mad * 0.9 && c.val.mad / c.inS.mad > 1.5) : [];
+  if (over.length) b5.push(`${over[0].name} ajusta mejor el historial (MAD ${fmt0(over[0].inS.mad)} frente a ${fmt0(pk.inS.mad)}), pero rinde peor al pronosticar datos nuevos (${crit} ${F(cv(over[0]))}). Es un caso típico de sobreajuste: más parámetros no garantizan mejores pronósticos.`);
+  b5.push(`Con ${n} datos y ${h} períodos de validación la comparación es indicativa, no definitiva. Un tramo de validación atípico puede alterar el ranking.`);
+  if (pk.opt) b5.push('Los parámetros optimizados dependen de la muestra. Conviene reestimarlos cuando se agreguen nuevos datos.');
+  b5.push(`La banda de ≈95 % de la tabla de pronóstico usa σ ≈ 1,25 × MAD y supone errores simétricos y estables en el tiempo.`);
+  b5.push('El pronóstico extrapola el comportamiento pasado. Cambios del proyecto (precio, capacidad, nuevos mercados, promociones) no están incluidos.');
+  sec.push({ t: 'Riesgos y límites', b: b5 });
+  // 6 pronóstico
+  const f = pk.future, tot = f.reduce((a, v) => a + v, 0), pi = f.indexOf(Math.max(...f)), prev = y.slice(-f.length), prevT = prev.reduce((a, v) => a + v, 0);
+  const s6 = [`Para los próximos ${f.length} períodos (${S.futLabels[0]} a ${S.futLabels[f.length - 1]}) el modelo proyecta ${fmt0(tot)} unidades en total (promedio ${fmt0(tot / f.length)} por período). El pico esperado es ${S.futLabels[pi]} con ${fmt0(f[pi])} unidades.` + (prev.length === f.length && prevT > 0 ? ` Frente a los últimos ${f.length} períodos reales (${fmt0(prevT)}), es una variación de ${fmt1((tot / prevT - 1) * 100)} %.` : '')];
+  sec.push({ t: 'Pronóstico resultante', p: s6 });
+  const headline = sel.byParsimony ? `Empató en precisión con ${sel.bestRaw.name} y es más simple.` : (run2 ? `Superó a ${run2.name} por ${fmt1((cv(run2) / cv(pk) - 1) * 100)} % en ${crit}.` : 'Fue el único modelo evaluable.');
+  return { sections: sec, headline };
+}
+function renderJust() {
+  $('just').innerHTML = S.just.sections.map(s => `<h3>${esc(s.t)}</h3>` + (s.p || []).map(p => `<p>${esc(p)}</p>`).join('') + (s.b ? `<ul>${s.b.map(b => `<li>${esc(b)}</li>`).join('')}</ul>` : '') + (s.a || []).map(p => `<p>${esc(p)}</p>`).join('')).join('');
+}
+
+/* ---------- exportar ---------- */
+$('btnExport').onclick = async () => {
+  const { cfg, y, cands, sel, diag } = S, n = y.length, hv = cfg.holdout > 0, pk = sel.pick, ok = cands.filter(c => !c.na);
+  const wb = XLSX.utils.book_new(), add = (name, aoa, cols) => { const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = cols.map(w => ({ wch: w })); XLSX.utils.book_append_sheet(wb, ws, name); };
+  const r = [['INFORME DE PRONÓSTICO DE DEMANDA'], ['Grupo', $('grp').value], ['Proyecto', $('prj').value], ['Fecha', new Date().toLocaleDateString('es-PE')], ['Datos', `${n} períodos (${S.labels[0]} a ${S.labels[n - 1]})`],
+    ['Ciclo estacional', cfg.m], ['Períodos de validación', cfg.holdout], ['Criterio', CRIT[cfg.criterion]], ['Patrón detectado', PATLBL[diag.pattern]], ['Modelo recomendado', pk.name], ['Parámetros', pk.paramsFull], [], ['JUSTIFICACIÓN']];
+  S.just.sections.forEach(s => { r.push([s.t]); (s.p || []).forEach(p => r.push([p])); (s.b || []).forEach(b => r.push(['• ' + b])); (s.a || []).forEach(p => r.push([p])); r.push([]); });
+  if ($('notes').value.trim()) { r.push(['OBSERVACIONES DEL GRUPO']); r.push([$('notes').value.trim()]); }
+  add('Resumen', r, [110]);
+  const hd = ['#', 'Modelo', 'Parámetros', 'MAD ajuste', 'RMSE ajuste', 'MAPE ajuste %', ...(hv ? ['MAD validación', 'RMSE validación', 'MAPE validación %', 'Señal rastreo (val.)'] : ['Señal rastreo']), 'Parámetros estimados', 'Elegido'];
+  add('Comparación', [hd, ...sel.sorted.map((c, i) => [i + 1, c.name, c.paramsTrain, c.inS.mad, c.inS.rmse, c.inS.mape, ...(hv ? [c.val.mad, c.val.rmse, c.val.mape, c.val.ts] : [c.inS.ts]), c.k, c.id === pk.id ? 'SÍ' : ''])], [4, 46, 34, 13, 13, 13, 14, 15, 17, 18, 12, 9]);
+  add('Series', [['Período', 'Real', ...ok.map(c => c.name)], ...y.map((v, i) => [S.labels[i], v, ...ok.map(c => isFinite(c.fittedFull[i]) ? c.fittedFull[i] : '')])], [14, 10, ...ok.map(() => 22)]);
+  const sig = 1.25 * (hv ? pk.val.mad : pk.inS.mad);
+  add('Pronóstico', [['Período', 'Pronóstico (' + pk.name + ')', 'Mín. ≈95 %', 'Máx. ≈95 %', ...ok.filter(c => c.id !== pk.id).map(c => c.name)], ...pk.future.map((v, k) => [S.futLabels[k], v, Math.max(0, v - 1.96 * sig), v + 1.96 * sig, ...ok.filter(c => c.id !== pk.id).map(c => c.future[k])])], [14, 30, 12, 12, ...ok.map(() => 22)]);
+  const okk = await saveFile(`Pronostico_${($('grp').value || 'grupo').replace(/[^\w-]+/g, '_')}.xlsx`, new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: XLSX_MIME }));
+  $('expMsg').textContent = okk === true ? 'Informe generado.' : okk === 'declined' ? 'Descarga cancelada.' : 'No se pudo guardar el archivo.';
+};
+
+
+/* ---------- envío al docente (Google Apps Script) ---------- */
+const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+if (CONFIG.ENDPOINT) $('btnSend').classList.remove('hidden');
+function newId() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2); }
+function justText() {
+  const r = [];
+  S.just.sections.forEach(s => { r.push(s.t.toUpperCase()); (s.p || []).forEach(p => r.push(p)); (s.b || []).forEach(b => r.push('• ' + b)); (s.a || []).forEach(p => r.push(p)); r.push(''); });
+  return r.join('\n').trim();
+}
+function buildPayload() {
+  const { cfg, y, sel } = S, pk = sel.pick, hv = cfg.holdout > 0, sig = 1.25 * (hv ? pk.val.mad : pk.inS.mad);
+  return {
+    token: CONFIG.TOKEN, id: S.runId, ts: new Date().toISOString(),
+    grupo: $('grp').value.trim(), proyecto: $('prj').value.trim(), fuente: S.srcName,
+    n: y.length, ciclo: cfg.m, validacion: cfg.holdout, criterio: CRIT[cfg.criterion], patron: PATLBL[S.diag.pattern],
+    modelo: pk.name, parametros: pk.paramsFull, errorValidacion: critV(pk), madAjuste: pk.inS.mad, senalRastreo: basisM(pk).ts,
+    totalPronostico: pk.future.reduce((a, v) => a + v, 0), justificacion: justText(), observaciones: $('notes').value.trim(),
+    comparacion: sel.sorted.map((c, i) => ({ rank: i + 1, modelo: c.name, parametros: c.paramsTrain, madAjuste: c.inS.mad, madVal: hv ? c.val.mad : null, rmseVal: hv ? c.val.rmse : null, mapeVal: hv ? c.val.mape : null, ts: basisM(c).ts, elegido: c.id === pk.id })),
+    pronostico: pk.future.map((v, k) => ({ periodo: S.futLabels[k], valor: v, min: Math.max(0, v - 1.96 * sig), max: v + 1.96 * sig })),
+    datos: y.map((v, i) => ({ periodo: S.labels[i], valor: v }))
+  };
+}
+$('btnSend').onclick = async () => {
+  const out = $('sendMsg'), b = $('btnSend');
+  if (!$('grp').value.trim()) { out.textContent = 'Escriba el nombre del grupo (paso 1) antes de enviar.'; $('grp').focus(); return; }
+  b.disabled = true; out.textContent = 'Enviando…';
+  const body = JSON.stringify(buildPayload());
+  try {
+    const r = await fetch(CONFIG.ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body });
+    const j = await r.json();
+    if (j.ok) { out.textContent = j.duplicado ? 'Este resultado ya estaba registrado.' : 'Resultados enviados al docente. Si cambia las observaciones y vuelve a enviar, se registrará como un envío nuevo.'; S.runId = newId(); }
+    else out.textContent = 'No se pudo registrar: ' + (j.error || 'error desconocido');
+  } catch (e) {
+    try { await fetch(CONFIG.ENDPOINT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body }); out.textContent = 'Enviado, pero no se pudo confirmar la recepción. Avise a su docente si no aparece.'; }
+    catch (e2) { out.textContent = 'No se pudo enviar. Revise su conexión e intente de nuevo.'; }
+  }
+  b.disabled = false;
+};
+
+</script>
+</body>
+</html>
