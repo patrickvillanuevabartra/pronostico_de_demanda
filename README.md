@@ -61,6 +61,19 @@ const CONFIG = { ENDPOINT: 'https://script.google.com/macros/s/XXXXXXXX/exec', T
 
 Si algo falla en el paso 4, ejecute `probarConexion` para verificar que la clave funciona: debe listar sus bases en el registro de ejecución.
 
+## Notas y alertas dentro de la página
+
+Para que los estudiantes se guíen solos, la página incluye:
+
+- **Botones «i»** junto a cada campo y resultado. Abren una nota con la explicación y un **ejemplo**.
+- **Alertas antes de simular** (paso 2), que se actualizan mientras el grupo cambia la configuración: serie corta, filas omitidas,
+  valores negativos, demanda con muchos ceros, posibles datos atípicos, fechas desordenadas o con saltos, ciclo que no coincide con
+  la frecuencia, modelos estacionales sin datos suficientes, validación ausente, muy corta o muy larga, horizonte largo y estacionalidad
+  no considerada. Cada alerta trae **ejemplo** y **qué hacer**.
+- **Alertas del resultado**: sesgo, sobreajuste, precisión baja, modelo que no coincide con el patrón, empate técnico, cambio brusco
+  del pronóstico, banda de incertidumbre que llega a cero y modelos que no participaron.
+- **Guía de los modelos y términos** al final de la página, con un ejemplo numérico por modelo.
+
 ## Cómo se ven los envíos
 
 - Cada envío tiene un `ID` que se repite en las tres tablas, para enlazar la fila de **Resultados** con sus filas de **Comparacion** y **Pronostico**.
