@@ -187,10 +187,9 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
       </div>
       <input type="file" id="file" accept=".xlsx,.xls,.csv,.txt" class="hidden">
       <div class="links">
-        <button class="linkbtn" id="btnSample">Probar con los datos de la plantilla</button>
         <button class="linkbtn" id="btnTpl">Descargar formato de carga</button>
         <button class="linkbtn" id="btnPasteToggle">Pegar desde Excel</button>
-        <button class="linkbtn" data-help="archivo" data-panel="hp-datos">¿Cómo debe ser mi archivo?</button>
+        <button class="linkbtn" id="btnSample">Ver un ejemplo con datos de muestra</button>
       </div>
       <div id="pasteBox" class="hidden" style="margin-top:12px">
         <label class="f" for="paste">Pegue las columnas (período y demanda, o solo demanda)</label>
@@ -707,6 +706,7 @@ function dateStep(dts) {
 
 function setData(vals, labs, dts, skipped) {
   S.y = vals; S.results = null;
+  S.isSample = !!S.nextSample; S.nextSample = false;
   const n = vals.length, allDates = dts.length && dts.every(d => d), st = allDates ? dateStep(dts) : null;
   S.step = st; S.dates = allDates ? dts : null;
   S.labels = vals.map((_, i) => allDates ? fmtDate(dts[i], st ? st.k : 'm') : (labs[i] != null ? String(labs[i]) : `P${i + 1}`));
@@ -764,7 +764,7 @@ $('btnPasteToggle').onclick = () => $('pasteBox').classList.toggle('hidden');
 $('btnPaste').onclick = () => parsePaste($('paste').value);
 $('btnSample').onclick = () => {
   const y = [2000, 3000, 3000, 3000, 4000, 6000, 7000, 6000, 10000, 12000, 14000, 8000, 3000, 4000, 3000, 5000, 5000, 8000, 3000, 8000, 12000, 12000, 16000, 10000, 2000, 5000, 5000, 3000, 4000, 6000, 7000, 10000, 15000, 15000, 18000, 8000, 5000, 4000, 4000, 2000, 5000, 7000, 10000, 14000, 16000, 16000, 20000, 12000, 5000, 2000, 3000, 2000, 7000, 6000, 8000, 10000, 20000, 20000, 22000, 8000];
-  S.srcName = 'Datos de la plantilla (60 meses)'; $('mapBox').classList.add('hidden');
+  S.srcName = 'Datos de ejemplo (no son de su proyecto)'; S.nextSample = true; $('mapBox').classList.add('hidden');
   const dts = y.map((_, i) => new Date(Date.UTC(2005, i, 1)));
   setData(y, y.map(() => null), dts, 0);
 };
@@ -1031,8 +1031,7 @@ $('btnExport').onclick = async () => {
 
 /* ===================== NOTAS INFORMATIVAS ===================== */
 const NOTES = {
-  datos: { t: 'Qué datos cargar', p: 'Cargue la demanda proyectada de su proyecto: una cifra por período (mes, trimestre…), en orden cronológico. Mientras más períodos, más confiable es la comparación; lo ideal son al menos 24 meses.', ex: 'Una panadería estima vender 1 200 panes en enero, 1 350 en febrero y 1 280 en marzo. Esas cifras van en una columna «Demanda» y los meses en otra columna «Período».' },
-  archivo: { t: 'Cómo debe ser el archivo', p: 'Excel (.xlsx, .xls) o CSV, con encabezados en la primera fila. Una columna con la demanda (obligatoria y numérica) y otra con el período (opcional). Sin filas de totales ni celdas de texto entre los datos. Puede bajar el formato con «Descargar formato de carga».', ex: 'Fila 1: «Período | Demanda». Fila 2: «ene-25 | 1200». Fila 3: «feb-25 | 1350». Una fila «Total | 15600» al final se tomaría como un período más y distorsionaría todo.' },
+  datos: { t: 'Qué datos cargar y cómo prepararlos', p: 'Cargue la demanda proyectada de su proyecto: una cifra por período (mes, trimestre…), en orden cronológico. Use un Excel (.xlsx, .xls) o CSV con encabezados en la primera fila: una columna de demanda (obligatoria, numérica) y otra de período (opcional). Sin filas de totales ni texto entre los datos. Lo ideal son al menos 24 períodos. Si es su primera vez, use «Descargar formato de carga»: ya trae las columnas listas.', ex: 'Una panadería estima vender 1 200 panes en enero y 1 350 en febrero. Fila 1: «Período | Demanda». Fila 2: «ene-25 | 1200». Fila 3: «feb-25 | 1350». Una fila final «Total | 2550» se tomaría como un período más y distorsionaría todo.' },
   grupo: { t: 'Grupo y proyecto', p: 'Identifican su envío en la base de datos del docente. Escríbalos igual en todos los envíos para que se puedan agrupar.', ex: 'Grupo: «Grupo 3». Proyecto: «Planta de jugos de camu camu». Si en otro envío escribe «G3», el docente lo verá como un grupo distinto.' },
   columnas: { t: 'Elegir la columna de demanda y de período', p: 'Si el archivo tiene varias columnas, indique cuál es la demanda y cuál el período. La página lo adivina por el encabezado (venta, demanda, mes, fecha…). Si la vista previa se ve rara, revise esta elección.', ex: 'Su hoja tiene «Año», «Mes» y «Ventas». Demanda = Ventas y Período = Mes. Si elige «Año» como demanda, verá una línea casi plana con valores como 2025.' },
   ciclo: { t: 'Ciclo estacional', p: 'Es cuántos períodos tarda en repetirse un patrón de temporada. Con datos mensuales el ciclo es 12; con trimestrales, 4. Si su demanda no tiene temporadas, elija «Sin estacionalidad». Los modelos estacionales necesitan al menos 2 ciclos completos de datos.', ex: 'Una heladería vende más de diciembre a marzo cada año: ciclo 12. Una app nueva que crece sin temporadas: «Sin estacionalidad». Con 18 meses y ciclo 12 solo hay 1,5 ciclos, y Winters queda desactivado.' },
@@ -1115,6 +1114,7 @@ function preAlerts() {
   const A = [], y = S.y; if (y.length < 8) return A;
   const n = y.length, m = getM(), h = Math.max(0, Math.round(+$('hold').value || 0)), H = Math.round(+$('hor').value || 0), nt = n - h, crit = $('crit').value;
   const zeros = y.filter(v => v === 0).length, neg = y.filter(v => v < 0).length;
+  if (S.isSample) A.push({ l: 'warn', t: 'Está usando datos de ejemplo', x: 'Estos 60 meses son una muestra para practicar. No son la demanda de su proyecto.', ej: 'Si envía estos datos, el docente verá resultados de un ejemplo con el nombre de su grupo.', do: 'Para su proyecto, suba su archivo o pegue su demanda proyectada (paso 1).' });
   if (n < 24) A.push({ l: 'warn', t: `Serie corta: ${n} períodos`, x: 'Con menos de 24 períodos mensuales (dos años) no se pueden usar los modelos estacionales y los resultados son poco estables.', ej: `Con 18 meses y ciclo 12 solo hay 1,5 ciclos: Winters y «Tendencia y estacionalidad» se desactivan.`, do: 'Si puede, extienda la proyección de demanda a 24 meses o más. Si no, elija «Sin estacionalidad» y trate el resultado como indicativo.' });
   if (S.skipped) A.push({ l: 'warn', t: S.skipped === 1 ? 'Se omitió 1 fila sin valor numérico' : `Se omitieron ${S.skipped} filas sin valor numérico`, x: 'Esas filas no tenían un número válido en la columna de demanda (celdas vacías, texto, totales o encabezados repetidos).', ej: 'Una fila «Total 2025» o una celda con «n/d» no puede ser un período de demanda.', do: 'Verifique que eligió la columna correcta y que no hay filas de totales. Corrija el archivo y cárguelo de nuevo si faltan períodos.' });
   if (neg) A.push({ l: 'err', t: neg === 1 ? 'Hay 1 valor negativo' : `Hay ${neg} valores negativos`, x: 'Una demanda no puede ser negativa. Los modelos funcionan, pero los resultados no serán confiables.', ej: 'Un dato de −50 unidades puede ser una devolución mal registrada.', do: 'Corrija el dato, o reemplácelo por 0 si son devoluciones netas.' });
@@ -1203,6 +1203,7 @@ function buildPayload() {
 $('btnSend').onclick = async () => {
   const out = $('sendMsg'), b = $('btnSend');
   if (!$('grp').value.trim()) { out.textContent = 'Escriba el nombre del grupo (paso 1) antes de enviar.'; $('grp').focus(); return; }
+  if (S.isSample && !window.confirm('Está usando datos de ejemplo, que no son de su proyecto. ¿Desea enviarlos de todos modos?')) return;
   b.disabled = true; out.textContent = 'Enviando…';
   const body = JSON.stringify(buildPayload());
   try {
