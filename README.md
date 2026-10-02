@@ -74,6 +74,20 @@ Para que los estudiantes se guíen solos, la página incluye:
   del pronóstico, banda de incertidumbre que llega a cero y modelos que no participaron.
 - **Guía de los modelos y términos** al final de la página, con un ejemplo numérico por modelo.
 
+## Proyección hacia adelante (paso 4)
+
+Después de simular, el grupo puede proyectar más allá de sus datos:
+
+1. **Método:** aparece el recomendado (★) y puede elegir otro de la lista. Si elige uno distinto, el informe lo indica.
+2. **Tipo de período:** mensual, trimestral, semanal, anual, diario u otro. La página lo detecta por las fechas y se puede corregir.
+3. **Horizonte:** un número y una unidad (por ejemplo «10 meses» o «10 años», que en datos mensuales equivale a 120 meses), o los atajos
+   «6 meses, 1 año, 3 años, 5 años, 10 años». El máximo es 600 períodos.
+4. **Resultado:** gráfico con banda de incertidumbre que se ensancha con la distancia, resumen por año (o por ciclo) con la variación
+   frente al año anterior, tabla período a período y alertas específicas (horizonte largo para la historia, crecimiento compuesto,
+   valores negativos, pronóstico plano, método distinto del recomendado).
+5. **Informe en Excel** (`Proyeccion_Grupo_Nperiodos.xlsx`) con las hojas: Resumen, Proyección, Resumen anual, Histórico y ajuste, y
+   Comparación de métodos. La proyección es un archivo personal del grupo; el envío a QuintaDB sigue siendo el del paso 3.
+
 ## Cómo se ven los envíos
 
 - Cada envío tiene un `ID` que se repite en las tres tablas, para enlazar la fila de **Resultados** con sus filas de **Comparacion** y **Pronostico**.
