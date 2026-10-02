@@ -153,12 +153,15 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
 .route b{display:block;margin-bottom:2px}
 .route i{display:block;color:var(--muted);font-style:normal;margin-top:4px}
 
+
+#pChips .chip{font:inherit}#pChips .chip:hover{background:var(--primary-soft);border-color:var(--primary)}
+.psum{margin:12px 0 0;max-width:90ch}
 </style>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <div class="brand">Simulador de pronósticos<small>Taller de proyecto</small></div>
-  <nav class="nav"><a href="#datos">Datos</a><a href="#config">Configuración</a><a href="#resultados">Resultados</a><a href="#metodo">Guía</a></nav>
+  <nav class="nav"><a href="#datos">Datos</a><a href="#config">Configuración</a><a href="#resultados">Resultados</a><a href="#proyeccion">Proyección</a><a href="#metodo">Guía</a></nav>
 </div></header>
 
 <main class="wrap">
@@ -169,7 +172,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
     <div><b>1. Cargue</b>Su demanda proyectada, un valor por período.<i>Ej.: 36 meses de ventas estimadas del proyecto.</i></div>
     <div><b>2. Configure</b>Ciclo, validación y horizonte. Lea las alertas.<i>Ej.: ciclo 12, validar 12, pronosticar 12.</i></div>
     <div><b>3. Simule</b>Compare los modelos y revise sus alertas.<i>Ej.: gana Winters con MAD 2 200.</i></div>
-    <div><b>4. Entregue</b>Descargue el Excel y envíe el resultado.<i>Ej.: agregue sus observaciones antes.</i></div>
+    <div><b>4. Proyecte</b>Elija el método, proyecte y descargue el informe en Excel.<i>Ej.: 10 meses o 10 años hacia adelante.</i></div>
   </div>
 </div>
 
@@ -213,7 +216,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
         <select id="cycle"><option value="12">Mensual (12 períodos)</option><option value="4">Trimestral (4)</option><option value="6">Bimestral (6)</option><option value="52">Semanal, ciclo anual (52)</option><option value="7">Diario, ciclo semanal (7)</option><option value="1">Sin estacionalidad</option><option value="0">Otro…</option></select>
         <input type="number" id="cycleN" min="2" max="60" value="12" class="hidden" style="margin-top:6px" aria-label="Largo del ciclo"></div>
       <div><label class="f" for="hold">Períodos de validación<button type="button" class="helpbtn" data-help="validacion" data-panel="hp-config" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label><input type="number" id="hold" min="0" value="12"></div>
-      <div><label class="f" for="hor">Períodos a pronosticar<button type="button" class="helpbtn" data-help="horizonte" data-panel="hp-config" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label><input type="number" id="hor" min="1" max="60" value="12"></div>
+      
       <div><label class="f" for="crit">Criterio de decisión<button type="button" class="helpbtn" data-help="criterio" data-panel="hp-config" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label>
         <select id="crit"><option value="mad">MAD (error absoluto medio)</option><option value="rmse">RMSE (penaliza errores grandes)</option><option value="mape">MAPE (error porcentual)</option></select></div>
     </div>
@@ -275,6 +278,34 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
   </div>
 </section>
 
+<section class="step hidden" id="proyeccion">
+  <div class="step-h"><span class="n">4</span><h2>Proyectar hacia adelante</h2><button type="button" class="helpbtn" data-help="proy" data-panel="hp-proj" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></div>
+  <div class="helppanel hidden" id="hp-proj" role="region" aria-live="polite"></div>
+  <div class="card">
+    <div style="margin-bottom:12px"><label class="f" for="pMethod">Método de pronóstico<button type="button" class="helpbtn" data-help="metodoP" data-panel="hp-proj2" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label><select id="pMethod"></select></div>
+    <div class="row">
+      <div><label class="f" for="pUnit">Tipo de período de sus datos<button type="button" class="helpbtn" data-help="tipoPeriodo" data-panel="hp-proj2" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label>
+        <select id="pUnit"><option value="mes">Mensual</option><option value="trimestre">Trimestral</option><option value="semana">Semanal</option><option value="anio">Anual</option><option value="dia">Diario</option><option value="periodo">Otro</option></select></div>
+      <div><label class="f" for="pNum">Proyectar hacia adelante<button type="button" class="helpbtn" data-help="proyN" data-panel="hp-proj2" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></label><input type="number" id="pNum" min="1" max="600" value="1"></div>
+      <div><label class="f" for="pHU">Unidad</label><select id="pHU"></select></div>
+    </div>
+    <div class="chips" id="pChips" style="margin-top:12px" aria-label="Atajos de horizonte"></div>
+    <p class="psum" id="pSummary" role="status"></p>
+    <div class="helppanel hidden" id="hp-proj2" role="region" aria-live="polite"></div>
+  </div>
+  <div id="alertsProj" aria-live="polite"></div>
+  <h3 style="font-size:17px;margin:26px 0 10px">Proyección y banda de incertidumbre</h3>
+  <div class="card"><div class="chartbox" id="pbox"><svg id="projChart" viewBox="0 0 920 360" width="100%" role="img" aria-label="Demanda real y proyección hacia adelante"></svg><div class="tip hidden" id="ptip"></div></div></div>
+  <div id="annWrap">
+    <h3 style="font-size:17px;margin:26px 0 10px" id="annH">Resumen por año<button type="button" class="helpbtn" data-help="resumenAnual" data-panel="hp-proj3" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></h3>
+    <div class="helppanel hidden" id="hp-proj3" role="region" aria-live="polite"></div>
+    <div class="tblwrap"><table id="annTbl" style="min-width:560px"></table></div>
+  </div>
+  <h3 style="font-size:17px;margin:26px 0 10px">Detalle por período</h3>
+  <div class="tblwrap" style="max-height:380px;overflow:auto"><table id="projTbl" style="min-width:560px"></table></div>
+  <div class="card" style="margin-top:16px"><div class="actions" style="margin-top:0"><button class="btn pri" id="btnExportProj">Descargar informe de proyección en Excel</button><span class="muted" id="projMsg" style="align-self:center" role="status"></span></div>
+    <p class="muted" style="margin:10px 0 0;font-size:13px">El informe incluye el resumen, la proyección período a período, el resumen por año, el histórico con el ajuste del método y la comparación de métodos. Incluye también sus observaciones del paso 3.</p></div>
+</section>
 <section class="step" id="metodo">
   <div class="step-h"><span class="n"></span><h2>Guía de los modelos y términos</h2></div>
   <div class="card">
@@ -561,6 +592,7 @@ function runSimulation(y, cfg) {
     r.valFc = h > 0 ? tr.model.fc(h) : null;
     r.fittedFull = full.model.fitted;
     r.future = full.model.fc(cfg.horizon);
+    r.fc = full.model.fc;
     out.push(r);
   }
   return out;
@@ -697,7 +729,6 @@ function setData(vals, labs, dts, skipped) {
   setCycle(m);
   S.autoM = st ? m : null;
   autoHold();
-  $('hor').value = Math.max(1, Math.min(getM() > 1 ? getM() : 6, 24));
   refreshAlerts(); renderPreview(); updateRun();
 }
 
@@ -760,7 +791,7 @@ $('btnRun').onclick = () => {
 
 function run() {
   const n = S.y.length, m = getM();
-  let h = Math.max(0, Math.round(+$('hold').value || 0)), H = Math.max(1, Math.min(60, Math.round(+$('hor').value || 12)));
+  let h = Math.max(0, Math.round(+$('hold').value || 0)), H = (m > 1 ? Math.min(m, 24) : 6);
   if (n - h < 8) { h = Math.max(0, n - 8); $('hold').value = h; }
   const cfg = { m, holdout: h, horizon: H, criterion: $('crit').value, parsimony: $('pars').checked, variant: $('variant').value,
     manual: { on: $('manOn').checked, type: $('manType').value, al: +$('rAl').value, be: +$('rBe').value, ga: +$('rGa').value, N: +$('rN').value } };
@@ -776,7 +807,7 @@ function run() {
   S.shown = new Set(top);
   S.just = buildJust();
   $('resultados').classList.remove('hidden');
-  renderVerdict(); renderTable(); renderChips(); drawMain(); drawResid(); renderFc(); renderJust(); renderPostAlerts();
+  renderVerdict(); renderTable(); renderChips(); drawMain(); drawResid(); renderFc(); renderJust(); renderPostAlerts(); initProjection();
   $('resultados').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -785,7 +816,7 @@ function makeFuture(H) {
   if (S.dates && S.step) {
     const last = S.dates[n - 1];
     for (let k = 1; k <= H; k++) {
-      const d = S.step.k === 'm' ? new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() + S.step.add * k, last.getUTCDate())) : new Date(last.getTime() + S.step.add * k * 86400000);
+      const d = S.step.k === 'm' ? new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth() + S.step.add * k, 1)) : new Date(last.getTime() + S.step.add * k * 86400000);
       out.push(fmtDate(d, S.step.k));
     }
   } else if (S.labels.every((l, i) => l === `P${i + 1}`)) for (let k = 1; k <= H; k++) out.push(`P${n + k}`);
@@ -856,7 +887,7 @@ function renderChips() {
 function drawMain() {
   const W = 920, H = 390, ml = 58, mr = 16, mt = 16, mb = 40, y = S.y, n = y.length, Hh = S.cfg.horizon, tot = n + Hh, h = S.cfg.holdout;
   const shown = S.cands.filter(c => !c.na && S.shown.has(c.id)), pk = S.sel.pick;
-  const sig = 1.25 * (S.cfg.holdout > 0 ? pk.val.mad : pk.inS.mad), band = pk.future.map(v => [Math.max(0, v - 1.96 * sig), v + 1.96 * sig]);
+  const band = pk.future.map((v, k) => { const s = sigK(pk, k + 1); return [Math.max(0, v - 1.96 * s), v + 1.96 * s]; });
   let mx = Math.max(...y, ...band.map(b => b[1]));
   shown.forEach(c => { c.fittedFull.forEach(v => { if (isFinite(v)) mx = Math.max(mx, v); }); c.future.forEach(v => mx = Math.max(mx, v)); });
   mx = niceMax(mx * 1.04);
@@ -907,7 +938,7 @@ function drawResid() {
 function renderFc() {
   const pk = S.sel.pick, sig = 1.25 * (S.cfg.holdout > 0 ? pk.val.mad : pk.inS.mad);
   $('fcTbl').innerHTML = `<thead><tr><th>Período</th><th class="num">Pronóstico</th><th class="num">Mín. ≈95 %</th><th class="num">Máx. ≈95 %</th></tr></thead><tbody>` +
-    pk.future.map((v, k) => `<tr><td>${esc(S.futLabels[k])}</td><td class="num"><b>${fmt0(v)}</b></td><td class="num">${fmt0(Math.max(0, v - 1.96 * sig))}</td><td class="num">${fmt0(v + 1.96 * sig)}</td></tr>`).join('') + '</tbody>';
+    pk.future.map((v, k) => `<tr><td>${esc(S.futLabels[k])}</td><td class="num"><b>${fmt0(v)}</b></td><td class="num">${fmt0(Math.max(0, v - 1.96 * sigK(pk, k + 1)))}</td><td class="num">${fmt0(v + 1.96 * sigK(pk, k + 1))}</td></tr>`).join('') + '</tbody>';
 }
 
 /* ---------- justificación automática ---------- */
@@ -986,7 +1017,7 @@ $('btnExport').onclick = async () => {
   add('Comparación', [hd, ...sel.sorted.map((c, i) => [i + 1, c.name, c.paramsTrain, c.inS.mad, c.inS.rmse, c.inS.mape, ...(hv ? [c.val.mad, c.val.rmse, c.val.mape, c.val.ts] : [c.inS.ts]), c.k, c.id === pk.id ? 'SÍ' : ''])], [4, 46, 34, 13, 13, 13, 14, 15, 17, 18, 12, 9]);
   add('Series', [['Período', 'Real', ...ok.map(c => c.name)], ...y.map((v, i) => [S.labels[i], v, ...ok.map(c => isFinite(c.fittedFull[i]) ? c.fittedFull[i] : '')])], [14, 10, ...ok.map(() => 22)]);
   const sig = 1.25 * (hv ? pk.val.mad : pk.inS.mad);
-  add('Pronóstico', [['Período', 'Pronóstico (' + pk.name + ')', 'Mín. ≈95 %', 'Máx. ≈95 %', ...ok.filter(c => c.id !== pk.id).map(c => c.name)], ...pk.future.map((v, k) => [S.futLabels[k], v, Math.max(0, v - 1.96 * sig), v + 1.96 * sig, ...ok.filter(c => c.id !== pk.id).map(c => c.future[k])])], [14, 30, 12, 12, ...ok.map(() => 22)]);
+  add('Pronóstico', [['Período', 'Pronóstico (' + pk.name + ')', 'Mín. ≈95 %', 'Máx. ≈95 %', ...ok.filter(c => c.id !== pk.id).map(c => c.name)], ...pk.future.map((v, k) => [S.futLabels[k], v, Math.max(0, v - 1.96 * sigK(pk, k + 1)), v + 1.96 * sigK(pk, k + 1), ...ok.filter(c => c.id !== pk.id).map(c => c.future[k])])], [14, 30, 12, 12, ...ok.map(() => 22)]);
   const okk = await saveFile(`Pronostico_${($('grp').value || 'grupo').replace(/[^\w-]+/g, '_')}.xlsx`, new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: XLSX_MIME }));
   $('expMsg').textContent = okk === true ? 'Informe generado.' : okk === 'declined' ? 'Descarga cancelada.' : 'No se pudo guardar el archivo.';
 };
@@ -1000,11 +1031,15 @@ const NOTES = {
   columnas: { t: 'Elegir la columna de demanda y de período', p: 'Si el archivo tiene varias columnas, indique cuál es la demanda y cuál el período. La página lo adivina por el encabezado (venta, demanda, mes, fecha…). Si la vista previa se ve rara, revise esta elección.', ex: 'Su hoja tiene «Año», «Mes» y «Ventas». Demanda = Ventas y Período = Mes. Si elige «Año» como demanda, verá una línea casi plana con valores como 2025.' },
   ciclo: { t: 'Ciclo estacional', p: 'Es cuántos períodos tarda en repetirse un patrón de temporada. Con datos mensuales el ciclo es 12; con trimestrales, 4. Si su demanda no tiene temporadas, elija «Sin estacionalidad». Los modelos estacionales necesitan al menos 2 ciclos completos de datos.', ex: 'Una heladería vende más de diciembre a marzo cada año: ciclo 12. Una app nueva que crece sin temporadas: «Sin estacionalidad». Con 18 meses y ciclo 12 solo hay 1,5 ciclos, y Winters queda desactivado.' },
   validacion: { t: 'Períodos de validación', p: 'Son los últimos períodos de la serie que se esconden a los modelos para ver qué tan bien pronostican datos que no conocían. Sin validación, un modelo complicado parece mejor de lo que es (sobreajuste). Sugerido: un ciclo completo, o cerca de 1/4 de los datos.', ex: 'Con 60 meses y validación 12: los modelos se ajustan con los meses 1 a 48 y se evalúan pronosticando los meses 49 a 60.' },
-  horizonte: { t: 'Períodos a pronosticar', p: 'Cuántos períodos hacia adelante quiere proyectar. Mientras más lejos, menos confiable. Evite pasar de la mitad de su histórico.', ex: 'Con 36 meses de historia, proyectar 12 meses es razonable. Proyectar 36 sería adivinar.' },
   criterio: { t: 'Criterio de decisión', p: 'Es la medida de error con la que se elige el mejor modelo. MAD: error promedio en unidades. RMSE: castiga más los errores grandes. MAPE: error en porcentaje, útil para comparar productos de distinto tamaño (no sirve si hay ceros).', ex: 'MAD = 800 significa que el pronóstico se equivoca en promedio 800 unidades por período. MAPE = 12 % significa que se equivoca un 12 % en promedio.' },
   pars: { t: 'Preferir el modelo más simple', p: 'Si un modelo más simple queda a menos de 5 % del mejor error, se prefiere el simple: estima menos parámetros, es más fácil de explicar y suele fallar menos con datos nuevos.', ex: 'Winters tiene MAD de validación 2 200 y la tasa media anual 2 307. La diferencia es 4,9 %, así que se elige la tasa media anual por ser más simple.' },
   variant: { t: 'Actualización estacional de Winters', p: 'Winters actualiza los índices estacionales con el nivel de ventas. La plantilla usa el nivel del período anterior; la fórmula estándar de los textos usa el nivel actual. La diferencia es pequeña.', ex: 'Si quiere reproducir el MAD de la hoja «Winters» del Excel de referencia, deje «Como en la plantilla».' },
   manual: { t: 'Escenario manual', p: 'Pruebe sus propios parámetros y compárelos con los optimizados. α (0 a 1) da peso a lo reciente: cerca de 1 reacciona rápido, cerca de 0 es estable. β controla la tendencia, γ la estacionalidad y N es la ventana del promedio móvil.', ex: 'SES con α = 0,9 casi copia el dato anterior; con α = 0,1 casi ignora los cambios recientes. Pruebe ambos y vea cuál queda mejor en la tabla.' },
+  proy: { t: 'Proyectar hacia adelante', p: 'Aquí usa el método que eligió para pronosticar más allá de sus datos, por la cantidad de meses, trimestres o años que necesite, y descarga el informe en Excel. El pronóstico parte del último dato real y continúa período a período.', ex: 'Con 36 meses de ventas estimadas, elija el método recomendado y proyecte 10 años (120 meses) para dimensionar una planta; o 10 meses para planificar compras.' },
+  metodoP: { t: 'Método de pronóstico', p: 'Por defecto aparece el recomendado (★), que es el de menor error en la validación. Puede elegir otro de la lista, ordenada de mejor a peor. Si elige uno distinto, el informe lo indica y conviene justificarlo en las observaciones.', ex: 'Si su proyecto tendrá un cambio que los datos no muestran (una nueva sucursal), puede preferir un método con tendencia aunque no sea el primero de la lista.' },
+  tipoPeriodo: { t: 'Tipo de período de sus datos', p: 'Indica si cada fila de su serie es un mes, un trimestre, una semana, un año o un día. La página lo detecta por las fechas; corríjalo si no es correcto. Define las unidades del horizonte y el resumen por año.', ex: 'Si sus datos son mensuales, «Proyectar 10 años» equivale a 120 meses. Si son anuales, 10 períodos son 10 años.' },
+  proyN: { t: 'Proyectar hacia adelante', p: 'Escriba cuánto quiere proyectar y elija la unidad (meses o años, según su tipo de período), o use los atajos. Mientras más lejos proyecte, menos confiable es el resultado y más ancha la banda de incertidumbre.', ex: 'Datos mensuales: «10» + «meses» proyecta 10 meses; «10» + «años» proyecta 120 meses. El máximo es 600 períodos.' },
+  resumenAnual: { t: 'Resumen por año', p: 'Suma la demanda proyectada de cada año (o ciclo) y compara el promedio con el año anterior. El primer año se compara con el último año real de sus datos. Un año parcial se marca como tal y se compara por promedio.', ex: 'Si el último año real promedió 1 000 por mes y el Año 1 proyectado promedia 1 100, la variación es +10,0 %.' },
   recomendado: { t: 'Modelo recomendado', p: 'Es el modelo con menor error en los períodos de validación (con la regla de simplicidad si está activa). Es una recomendación numérica: usted debe comprobar que tenga sentido para su proyecto.', ex: 'Si el recomendado es «Promedio simple» pero sus datos crecen claramente, sospeche: quizá la validación es muy corta o hay un dato atípico.' },
   tabla: { t: 'Cómo leer la tabla', p: 'Cada fila es un modelo, ordenado del menor al mayor error. El «MAD ajuste» mide cómo se ajusta al pasado; el error de validación mide cómo pronostica datos que no vio. Decida por la validación. Use las casillas de la última columna para verlos en el gráfico.', ex: 'Winters con Solver completo: ajuste 872 (muy bueno) pero validación 2 246. Winters de la plantilla: ajuste 1 329 y validación 2 200. El segundo pronostica mejor aunque ajusta peor.' },
   mad: { t: 'MAD (error absoluto medio)', p: 'Promedio del valor absoluto del error, en unidades de demanda. Menor es mejor.', ex: 'Reales 100, 120, 90 y pronósticos 110, 110, 100: errores 10, 10 y 10, entonces MAD = 10.' },
@@ -1061,9 +1096,10 @@ function hiddenCycle(y) {
 }
 const monthsBetween = (a, b) => (b.getUTCFullYear() - a.getUTCFullYear()) * 12 + (b.getUTCMonth() - a.getUTCMonth());
 function alertHTML(a) {
+  const T = a.plain ? esc : (x => x);
   const lbl = { err: 'Error', warn: 'Aviso', info: 'Nota', ok: 'Listo' }[a.l], cls = { err: 'b', warn: 'w', info: 'p', ok: 'g' }[a.l];
-  return `<div class="alert ${a.l}"${a.l === 'err' ? ' role="alert"' : ''}><div class="al-h"><span class="tag ${cls}">${lbl}</span><b>${a.t}</b></div><p>${a.x}</p>` +
-    (a.ej ? `<p class="al-ex"><b>Ejemplo:</b> ${a.ej}</p>` : '') + (a.do ? `<p class="al-do"><b>Qué hacer:</b> ${a.do}</p>` : '') + '</div>';
+  return `<div class="alert ${a.l}"${a.l === 'err' ? ' role="alert"' : ''}><div class="al-h"><span class="tag ${cls}">${lbl}</span><b>${T(a.t)}</b></div><p>${T(a.x)}</p>` +
+    (a.ej ? `<p class="al-ex"><b>Ejemplo:</b> ${T(a.ej)}</p>` : '') + (a.do ? `<p class="al-do"><b>Qué hacer:</b> ${T(a.do)}</p>` : '') + '</div>';
 }
 const ORD = { err: 0, warn: 1, info: 2, ok: 3 };
 function alertsBlock(list, titleFn) {
@@ -1076,7 +1112,7 @@ const plural = (n, s, p) => `${n} ${n === 1 ? s : p}`;
 
 function preAlerts() {
   const A = [], y = S.y; if (y.length < 8) return A;
-  const n = y.length, m = getM(), h = Math.max(0, Math.round(+$('hold').value || 0)), H = Math.round(+$('hor').value || 0), nt = n - h, crit = $('crit').value;
+  const n = y.length, m = getM(), h = Math.max(0, Math.round(+$('hold').value || 0)), nt = n - h, crit = $('crit').value;
   const zeros = y.filter(v => v === 0).length, neg = y.filter(v => v < 0).length;
   if (n < 24) A.push({ l: 'warn', t: `Serie corta: ${n} períodos`, x: 'Con menos de 24 períodos mensuales (dos años) no se pueden usar los modelos estacionales y los resultados son poco estables.', ej: `Con 18 meses y ciclo 12 solo hay 1,5 ciclos: Winters y «Tendencia y estacionalidad» se desactivan.`, do: 'Si puede, extienda la proyección de demanda a 24 meses o más. Si no, elija «Sin estacionalidad» y trate el resultado como indicativo.' });
   if (S.skipped) A.push({ l: 'warn', t: S.skipped === 1 ? 'Se omitió 1 fila sin valor numérico' : `Se omitieron ${S.skipped} filas sin valor numérico`, x: 'Esas filas no tenían un número válido en la columna de demanda (celdas vacías, texto, totales o encabezados repetidos).', ej: 'Una fila «Total 2025» o una celda con «n/d» no puede ser un período de demanda.', do: 'Verifique que eligió la columna correcta y que no hay filas de totales. Corrija el archivo y cárguelo de nuevo si faltan períodos.' });
@@ -1103,7 +1139,6 @@ function preAlerts() {
   else if (h < 3) A.push({ l: 'info', t: `Validación muy corta (${h})`, x: 'Con tan pocos períodos, el ranking puede depender del azar.', ej: 'Con 2 meses de validación, un modelo puede ganar solo porque esos 2 meses fueron tranquilos.', do: 'Use al menos 6 períodos si sus datos lo permiten.' });
   else if (h > Math.floor(n / 3)) A.push({ l: 'warn', t: `Validación demasiado larga (${h} de ${n})`, x: 'Quedan pocos datos para ajustar los modelos.', ej: `Con ${n} datos y validación ${h}, los modelos se ajustan solo con ${nt} períodos.`, do: `Reduzca la validación a ${Math.floor(n / 3)} o menos.` });
   if (n - h < 8 && h > 0) A.push({ l: 'info', t: 'La validación se reducirá automáticamente', x: 'Se necesitan al menos 8 períodos para ajustar los modelos.', ej: `Con ${n} datos, la validación máxima es ${Math.max(0, n - 8)}.`, do: 'Revise el valor que quedará al ejecutar.' });
-  if (H > n / 2) A.push({ l: 'warn', t: `Horizonte largo: ${H} períodos con ${n} de historia`, x: 'Pronosticar más de la mitad del histórico es poco confiable: el error crece con la distancia.', ej: 'Con 36 meses de historia, proyectar 12 meses es razonable; proyectar 36 sería adivinar.', do: `Reduzca el horizonte a ${Math.max(1, Math.floor(n / 2))} o menos, o explique la incertidumbre en las observaciones.` });
   if (!A.some(a => a.l === 'err' || a.l === 'warn')) A.push({ l: 'ok', t: 'Configuración lista para simular', x: 'No se detectaron problemas con los datos ni con la configuración.', ej: 'Después de simular, revise las alertas de los resultados antes de entregar.' });
   return A;
 }
@@ -1139,7 +1174,178 @@ function postAlerts() {
 function renderPostAlerts() {
   $('alertsPost').innerHTML = alertsBlock(postAlerts(), (e, w, i) => `Alertas del resultado: ${[e ? plural(e, 'error', 'errores') : '', w ? plural(w, 'aviso', 'avisos') : '', i ? plural(i, 'nota', 'notas') : ''].filter(Boolean).join(', ') || 'todo en orden'}`);
 }
-['hold', 'hor', 'cycle', 'cycleN', 'crit'].forEach(id => { $(id).addEventListener('input', refreshAlerts); $(id).addEventListener('change', refreshAlerts); });
+['hold', 'cycle', 'cycleN', 'crit'].forEach(id => { $(id).addEventListener('input', refreshAlerts); $(id).addEventListener('change', refreshAlerts); });
+
+/* ===================== PROYECCIÓN HACIA ADELANTE (paso 4) ===================== */
+const UNITS = {
+  mes: { s: 'mes', p: 'meses', ppy: 12 }, trimestre: { s: 'trimestre', p: 'trimestres', ppy: 4 }, semana: { s: 'semana', p: 'semanas', ppy: 52 },
+  anio: { s: 'año', p: 'años', ppy: null }, dia: { s: 'día', p: 'días', ppy: null }, periodo: { s: 'período', p: 'períodos', ppy: null }
+};
+const CHIPS = {
+  mes: [[6, 'p'], [1, 'a'], [3, 'a'], [5, 'a'], [10, 'a']], trimestre: [[2, 'p'], [1, 'a'], [3, 'a'], [5, 'a'], [10, 'a']],
+  semana: [[13, 'p'], [1, 'a'], [2, 'a'], [5, 'a']], anio: [[3, 'p'], [5, 'p'], [10, 'p'], [20, 'p']],
+  dia: [[30, 'p'], [90, 'p'], [180, 'p'], [365, 'p']], periodo: [[6, 'p'], [12, 'p'], [24, 'p'], [60, 'p']]
+};
+const MAXH = 600;
+const sigK = (c, k) => 1.25 * (S.cfg.holdout > 0 ? c.val.mad : c.inS.mad) * Math.sqrt(Math.max(1, k / Math.max(1, S.cfg.holdout)));
+function detectUnit() {
+  const st = S.step;
+  if (st) { if (st.k === 'm') return st.add === 3 ? 'trimestre' : 'mes'; if (st.k === 'd') return st.add === 7 ? 'semana' : 'dia'; }
+  const m = S.cfg.m; return m === 12 ? 'mes' : m === 4 ? 'trimestre' : m === 52 ? 'semana' : m === 7 ? 'dia' : 'periodo';
+}
+const chipLabel = (n, u, unit) => u === 'a' ? `${n} ${n === 1 ? 'año' : 'años'}` : `${n} ${n === 1 ? UNITS[unit].s : UNITS[unit].p}`;
+function buildHU(keep) {
+  const U = UNITS[$('pUnit').value], o = [`<option value="p">${U.p}</option>`]; if (U.ppy) o.push('<option value="a">años</option>');
+  $('pHU').innerHTML = o.join(''); if (keep && [...$('pHU').options].some(x => x.value === keep)) $('pHU').value = keep;
+}
+function projChips() {
+  const unit = $('pUnit').value;
+  $('pChips').innerHTML = CHIPS[unit].map(([n, u]) => `<button type="button" class="chip" data-n="${n}" data-u="${u}">${chipLabel(n, u, unit)}</button>`).join('');
+}
+function initProjection() {
+  const ranked = S.sel.sorted, crit = CRIT[S.cfg.criterion], hv = S.cfg.holdout > 0;
+  $('pMethod').innerHTML = ranked.map(c => `<option value="${c.id}">${c.id === S.sel.pick.id ? '★ ' : ''}${esc(c.name)} · ${crit} ${hv ? 'validación' : 'ajuste'} ${fmtCrit(critV(c))}${c.id === S.sel.pick.id ? ' (recomendado)' : ''}</option>`).join('');
+  $('pMethod').value = S.sel.pick.id;
+  $('pUnit').value = detectUnit(); buildHU(); projChips();
+  const U = UNITS[$('pUnit').value];
+  if (U.ppy) { $('pHU').value = 'a'; $('pNum').value = 1; } else { $('pHU').value = 'p'; $('pNum').value = S.cfg.m > 1 ? S.cfg.m : 6; }
+  $('projMsg').textContent = ''; $('proyeccion').classList.remove('hidden');
+  renderProjection();
+}
+function computeProjection() {
+  const c = S.cands.find(x => x.id === $('pMethod').value) || S.sel.pick, y = S.y, n = y.length;
+  const unit = $('pUnit').value, U = UNITS[unit], hu = ($('pHU').value === 'a' && U.ppy) ? 'a' : 'p';
+  let num = Math.max(1, Math.round(+$('pNum').value || 1)), H = hu === 'a' ? num * U.ppy : num, capped = false;
+  if (H > MAXH) { H = MAXH; capped = true; num = hu === 'a' ? Math.max(1, Math.floor(H / U.ppy)) : H; if (hu === 'a') H = num * U.ppy; $('pNum').value = num; }
+  const raw = c.fc(H), lab = makeFuture(H);
+  const rows = raw.map((r, k) => { const v = Math.max(0, r), s = sigK(c, k + 1); return { n: k + 1, label: lab[k], v, lo: Math.max(0, v - 1.96 * s), hi: v + 1.96 * s, raw: r }; });
+  const B = U.ppy || (S.cfg.m > 1 ? S.cfg.m : null), bname = U.ppy ? 'Año' : 'Ciclo';
+  const total = rows.reduce((a, r) => a + r.v, 0), avg = total / H;
+  const blocks = []; let prevAvg = (B && n >= B) ? mean(y.slice(-B)) : null;
+  if (B) for (let i = 0; i < H; i += B) {
+    const sl = rows.slice(i, i + B), t = sl.reduce((a, r) => a + r.v, 0), av = t / sl.length;
+    blocks.push({ name: `${bname} ${blocks.length + 1}${sl.length < B ? ' (parcial)' : ''}`, from: sl[0].label, to: sl[sl.length - 1].label, len: sl.length, total: t, avg: av, growth: prevAvg ? (av / prevAvg - 1) * 100 : null });
+    prevAvg = av;
+  }
+  return { c, unit, U, hu, num, H, capped, rows, B, bname, blocks, total, avg, raw };
+}
+function renderProjection() {
+  if (!S.sel) return;
+  const P = computeProjection(); S.proj = P;
+  const hs = P.hu === 'a' ? `${P.num} ${P.num === 1 ? 'año' : 'años'} (${P.H} ${P.U.p})` : `${P.H} ${P.H === 1 ? P.U.s : P.U.p}`;
+  $('pSummary').innerHTML = `Proyectará <b>${esc(hs)}</b>, de <b>${esc(P.rows[0].label)}</b> a <b>${esc(P.rows[P.H - 1].label)}</b>. Demanda total proyectada: <b>${fmt0(P.total)}</b> unidades.` + (P.capped ? ` El máximo permitido es ${MAXH} períodos.` : '');
+  P.alerts = projAlerts(P);
+  $('alertsProj').innerHTML = alertsBlock(P.alerts, (e, w, i) => `Alertas de la proyección: ${[e ? plural(e, 'error', 'errores') : '', w ? plural(w, 'aviso', 'avisos') : '', i ? plural(i, 'nota', 'notas') : ''].filter(Boolean).join(', ') || 'todo en orden'}`);
+  drawProj(P); renderAnn(P);
+  $('projTbl').innerHTML = `<thead><tr><th class="num">N.º</th><th>Período</th><th class="num">Pronóstico</th><th class="num">Mínimo ≈95 %</th><th class="num">Máximo ≈95 %</th>${P.B ? `<th>${P.bname}</th>` : ''}</tr></thead><tbody>` +
+    P.rows.map((r, k) => `<tr><td class="num">${r.n}</td><td>${esc(r.label)}</td><td class="num"><b>${fmt0(r.v)}</b></td><td class="num">${fmt0(r.lo)}</td><td class="num">${fmt0(r.hi)}</td>${P.B ? `<td>${P.bname} ${Math.floor(k / P.B) + 1}</td>` : ''}</tr>`).join('') + '</tbody>';
+}
+function renderAnn(P) {
+  $('annWrap').classList.toggle('hidden', !P.blocks.length);
+  if (!P.blocks.length) return;
+  $('annH').firstChild.textContent = P.U.ppy ? 'Resumen por año' : 'Resumen por ciclo';
+  $('annTbl').innerHTML = `<thead><tr><th>${P.bname}</th><th>Desde</th><th>Hasta</th><th class="num">Total</th><th class="num">Promedio por ${P.U.s}</th><th class="num">Variación vs ${P.bname.toLowerCase()} anterior</th></tr></thead><tbody>` +
+    P.blocks.map(b => `<tr><td><b>${esc(b.name)}</b></td><td>${esc(b.from)}</td><td>${esc(b.to)}</td><td class="num"><b>${fmt0(b.total)}</b></td><td class="num">${fmt0(b.avg)}</td><td class="num">${b.growth == null ? '—' : (b.growth > 0 ? '+' : '') + fmt1(b.growth) + ' %'}</td></tr>`).join('') + '</tbody>';
+}
+function drawProj(P) {
+  const W = 920, H = 360, ml = 58, mr = 16, mt = 16, mb = 40, y = S.y, n = y.length, tot = n + P.H, c = P.c, col = S.colors[c.id] || '#0B5D7A';
+  let mx = Math.max(...y, ...P.rows.map(r => r.hi)); (c.fittedFull || []).forEach(v => { if (isFinite(v)) mx = Math.max(mx, v); });
+  mx = niceMax(mx * 1.04);
+  const X = i => ml + i / (tot - 1) * (W - ml - mr), Y = v => mt + (1 - v / mx) * (H - mt - mb);
+  let g = '';
+  for (let t = 0; t <= 5; t++) { const v = mx * t / 5; g += `<line x1="${ml}" x2="${W - mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${ml - 8}" y="${Y(v) + 4}" text-anchor="end">${fmt0(v)}</text>`; }
+  g += `<rect x="${X(n - 1)}" y="${mt}" width="${X(tot - 1) - X(n - 1)}" height="${H - mt - mb}" fill="var(--shade2)"/><text x="${(X(n - 1) + X(tot - 1)) / 2}" y="${mt + 12}" text-anchor="middle">proyección</text>`;
+  const all = [...S.labels, ...P.rows.map(r => r.label)], step = Math.ceil(tot / 9);
+  for (let i = 0; i < tot; i += step) g += `<text x="${X(i)}" y="${H - mb + 18}" text-anchor="middle">${esc(all[i])}</text>`;
+  const up = [[n - 1, y[n - 1]], ...P.rows.map((r, k) => [n + k, r.hi])], lo = [[n - 1, y[n - 1]], ...P.rows.map((r, k) => [n + k, r.lo])].reverse();
+  g += `<polygon fill="${col}" opacity=".15" points="${up.concat(lo).map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(' ')}"/>`;
+  const path = (arr, off) => { let d = '', pen = false; arr.forEach((v, i) => { if (!isFinite(v)) { pen = false; return; } d += `${pen ? 'L' : 'M'}${X(i + off).toFixed(1)},${Y(v).toFixed(1)}`; pen = true; }); return d; };
+  g += `<path d="${path(c.fittedFull, 0)}" fill="none" stroke="${col}" stroke-width="1.4" opacity=".7"/>`;
+  g += `<path d="${path([y[n - 1], ...P.rows.map(r => r.v)], n - 1)}" fill="none" stroke="${col}" stroke-width="2.6" stroke-linejoin="round"/>`;
+  g += `<path d="${path(y, 0)}" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"/>`;
+  g += `<line id="pcur" x1="0" x2="0" y1="${mt}" y2="${H - mb}" stroke="var(--muted)" stroke-dasharray="3 3" class="hidden"/><rect id="phit" x="${ml}" y="${mt}" width="${W - ml - mr}" height="${H - mt - mb}" fill="transparent"/>`;
+  $('projChart').innerHTML = g;
+  const svg = $('projChart'), tip = $('ptip');
+  $('phit').onpointermove = e => {
+    const r = svg.getBoundingClientRect(), sx = (e.clientX - r.left) / r.width * W, i = Math.max(0, Math.min(tot - 1, Math.round((sx - ml) / (W - ml - mr) * (tot - 1))));
+    $('pcur').setAttribute('x1', X(i)); $('pcur').setAttribute('x2', X(i)); $('pcur').classList.remove('hidden');
+    let rows = '';
+    if (i < n) { rows += `<div><span>Real</span><b>${fmt0(y[i])}</b></div>`; if (isFinite(c.fittedFull[i])) rows += `<div><span>Ajuste del método</span><b>${fmt0(c.fittedFull[i])}</b></div>`; }
+    else { const q = P.rows[i - n]; rows += `<div><span>Proyección</span><b>${fmt0(q.v)}</b></div><div><span>Rango ≈95 %</span><b>${fmt0(q.lo)} – ${fmt0(q.hi)}</b></div>`; }
+    tip.innerHTML = `<b>${esc(all[i])}</b>${rows}`; tip.classList.remove('hidden');
+    const bw = $('pbox').getBoundingClientRect(), left = e.clientX - bw.left + 14;
+    tip.style.left = Math.min(left, bw.width - tip.offsetWidth - 4) + 'px'; tip.style.top = Math.max(0, e.clientY - bw.top - 20) + 'px';
+  };
+  $('phit').onpointerleave = () => { tip.classList.add('hidden'); $('pcur').classList.add('hidden'); };
+}
+
+/* ---------- alertas de la proyección (texto plano) ---------- */
+function projAlerts(P) {
+  const A = [], { c, H, U, hu, num, rows, B } = P, y = S.y, n = y.length, cfg = S.cfg, rec = S.sel.pick, hv = cfg.holdout > 0, b = basisM(c);
+  if (c.id !== rec.id) {
+    const e1 = critV(c), e0 = critV(rec), d = (e1 / e0 - 1) * 100;
+    A.push({ l: d > 20 ? 'warn' : 'info', plain: true, t: 'Eligió un método distinto al recomendado', x: `Usa ${c.name}; el sistema recomendó ${rec.name}. Su ${CRIT[cfg.criterion]} de ${hv ? 'validación' : 'ajuste'} es ${fmtCrit(e1)} frente a ${fmtCrit(e0)} (${d >= 0 ? '+' : ''}${fmt1(d)} %).`, ej: 'Si el recomendado se equivoca 2 200 unidades por mes y el elegido 3 100, el elegido falla 41 % más.', do: 'Justifique su elección en las observaciones del paso 3 (por ejemplo, porque conoce un cambio del proyecto que el otro método no ve).' });
+  }
+  if (Math.abs(b.ts) > 4) A.push({ l: 'warn', plain: true, t: `Este método ${b.ts > 0 ? 'subestima' : 'sobreestima'} la demanda`, x: `Su señal de rastreo es ${fmt2(b.ts)}, fuera de −4 a +4: se equivoca casi siempre hacia el mismo lado, y a mayor horizonte el sesgo se acumula.`, ej: 'Si sobreestima 5 % cada mes, a 10 años la proyección queda muy por encima de lo realista.', do: 'Considere otro método o ajuste el resultado y menciónelo en las observaciones.' });
+  const r = H / n;
+  if (r > 1) A.push({ l: 'warn', plain: true, t: `Proyecta ${H} períodos con solo ${n} de historia`, x: `Está extrapolando ${fmt1(r)} veces el largo de sus datos. Mientras más lejos del último dato, menos confiable es el pronóstico.`, ej: 'Con 36 meses de historia, proyectar 120 meses (10 años) es suponer que los próximos 10 años se parecerán a los últimos 3.', do: 'Trate el resultado como un escenario, planifique con la banda de ≈95 % y revise los supuestos cada año.' });
+  else if (r > 0.5) A.push({ l: 'warn', plain: true, t: 'Horizonte largo para su historia', x: `Proyecta ${H} períodos con ${n} de historia (más de la mitad). El error crece con la distancia.`, ej: 'Con 36 meses de historia, proyectar 12 meses es razonable; 24 ya exige cautela.', do: 'Use la banda de ≈95 % y no un solo número.' });
+  if (U.ppy && H / U.ppy >= 5) A.push({ l: 'info', plain: true, t: `Proyección a ${fmt0(H / U.ppy)} años: planifique con escenarios`, x: 'A varios años de distancia, el mercado, la competencia o la capacidad pueden cambiar. El modelo solo conoce el pasado.', ej: 'Un negocio que hoy vende 1 000 al mes puede llegar a 1 800 o caer a 600 en cinco años, según el mercado.', do: 'Complemente con un escenario optimista y uno pesimista (por ejemplo ±20 %).' });
+  const flat = c.id === 'prom' || c.id.startsWith('pm_') || c.id.startsWith('ses_') || (c.manual && /^(SES|PM)/.test(c.paramsFull));
+  if (flat && H >= 3) A.push({ l: 'info', plain: true, t: 'Pronóstico plano: repite el mismo valor', x: `${c.name} proyecta un nivel constante (${fmt0(rows[0].v)}); no incorpora crecimiento ni temporadas.`, ej: 'Si sus ventas vienen creciendo 10 % al año, una proyección plana a 10 años quedará muy por debajo de lo real.', do: 'Si espera crecimiento o temporadas, elija un método con tendencia (Holt, Tendencia lineal) o estacional (Winters).' });
+  let comp = false;
+  if (c.id === 'tm_per' || c.id === 'tm_anual') {
+    const g = parseFloat((c.paramsFull.match(/g=(-?[\d.]+)/) || [])[1]);
+    if (isFinite(g)) { const f = Math.pow(1 + g / 100, c.id === 'tm_anual' ? H / cfg.m : H); if (f > 3 || f < 1 / 3) { comp = true; A.push({ l: 'warn', plain: true, t: `Crecimiento compuesto: la demanda se multiplica por ${fmt1(f)}`, x: `Con ${fmt1(g)} % ${c.id === 'tm_anual' ? 'por ciclo' : 'por período'}, al final del horizonte la demanda es ${fmt1(f)} veces la actual. El crecimiento compuesto se dispara rápido.`, ej: 'Crecer 5 % mensual parece poco, pero en 12 meses es ×1,8 y en 5 años es ×18.', do: 'Reduzca el horizonte o compare con la tendencia lineal.' }); } }
+  }
+  const neg = rows.filter(r => r.raw < 0).length;
+  if (neg) A.push({ l: 'warn', plain: true, t: 'La proyección llega a valores negativos', x: `En ${neg} períodos el método daba un valor negativo y se llevó a 0, porque una demanda no puede ser negativa.`, ej: 'Una tendencia que baja 40 unidades por mes desde 1 000 llega a 0 en el mes 25.', do: 'Una caída indefinida rara vez es realista: acorte el horizonte o use otro método.' });
+  const Bm = B || Math.min(12, n);
+  if (!comp && H >= Bm) {
+    const fin = mean(rows.slice(-Bm).map(r => r.v)), his = mean(y.slice(-Bm)), q = his > 0 ? fin / his : NaN;
+    if (isFinite(q) && (q > 3 || q < 1 / 3)) A.push({ l: 'warn', plain: true, t: `La demanda promedio ${q > 1 ? 'se multiplica' : 'se reduce'} por ${fmt1(q > 1 ? q : 1 / q)} al final`, x: `Al final del horizonte el promedio proyectado (${fmt0(fin)}) es ${fmt1(q)} veces el de su último tramo histórico (${fmt0(his)}).`, ej: 'Pasar de vender 1 000 a 3 500 por mes en 10 años necesita razones concretas: nuevas plantas, mercados o clientes.', do: 'Confirme que ese cambio es coherente con la capacidad y el mercado del proyecto; si no, elija otro método.' });
+  }
+  if (sigK(c, H) > sigK(c, 1) * 1.05) A.push({ l: 'info', plain: true, t: 'La banda de incertidumbre se ensancha con la distancia', x: `En el primer período el rango de ≈95 % es ±${fmt0(1.96 * sigK(c, 1))}; en el último (el ${H}.º) es ±${fmt0(1.96 * sigK(c, H))}. Es una regla práctica, no un cálculo exacto.`, ej: 'Pronosticar el próximo mes con ±800 es razonable; pronosticarlo a 10 años con ±2 500 indica que solo se puede planificar con rangos.', do: 'Use el rango, no un único número, al dimensionar capacidad, inventario o inversión.' });
+  if (!A.some(a => a.l === 'warn' || a.l === 'err')) A.push({ l: 'ok', plain: true, t: 'Sin alertas críticas en la proyección', x: 'El horizonte es razonable para su historia y el método no muestra problemas evidentes.', ej: 'Aun así, la proyección no incluye eventos futuros del proyecto (nuevas sucursales, cambios de precio, competencia).', do: 'Agregue esos supuestos en las observaciones y descargue el informe.' });
+  return A;
+}
+
+/* ---------- eventos ---------- */
+$('pMethod').onchange = renderProjection;
+$('pNum').oninput = renderProjection;
+$('pHU').onchange = renderProjection;
+$('pUnit').onchange = () => { buildHU($('pHU').value); projChips(); renderProjection(); };
+$('pChips').onclick = e => {
+  const b = e.target.closest('.chip[data-n]'); if (!b) return;
+  if (b.dataset.u === 'a' && ![...$('pHU').options].some(o => o.value === 'a')) return;
+  $('pHU').value = b.dataset.u; $('pNum').value = b.dataset.n; renderProjection();
+};
+
+/* ---------- informe de proyección en Excel ---------- */
+$('btnExportProj').onclick = async () => {
+  const P = S.proj; if (!P) return;
+  const { cfg, y, sel } = S, c = P.c, hv = cfg.holdout > 0, rec = sel.pick, b = basisM(c), n = y.length, crit = CRIT[cfg.criterion];
+  const rd = v => isFinite(v) ? Math.round(v * 100) / 100 : '';
+  const wb = XLSX.utils.book_new(), add = (name, aoa, cols) => { const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = cols.map(w => ({ wch: w })); XLSX.utils.book_append_sheet(wb, ws, name); };
+  const hs = P.hu === 'a' ? `${P.num} ${P.num === 1 ? 'año' : 'años'} (${P.H} ${P.U.p})` : `${P.H} ${P.H === 1 ? P.U.s : P.U.p}`;
+  const r = [['INFORME DE PROYECCIÓN DE DEMANDA'], ['Grupo', $('grp').value], ['Proyecto', $('prj').value], ['Fecha de emisión', new Date().toLocaleDateString('es-PE')], [],
+    ['DATOS DE ENTRADA'], ['Fuente', S.srcName], ['Períodos históricos', `${n} (${S.labels[0]} a ${S.labels[n - 1]})`], ['Tipo de período', P.U.p], ['Ciclo estacional', cfg.m > 1 ? cfg.m : 'Sin estacionalidad'], ['Patrón detectado', PATLBL[S.diag.pattern]], [],
+    ['MÉTODO USADO'], ['Método', c.name], ['Parámetros', c.paramsFull], ['Origen de la elección', c.id === rec.id ? 'Recomendado por la simulación' : `Elegido por el grupo (el sistema recomendó: ${rec.name})`],
+    [`${crit} de ${hv ? 'validación' : 'ajuste'}`, rd(critV(c))], ['MAD de ajuste', rd(c.inS.mad)], ['Señal de rastreo', rd(b.ts)], [],
+    ['PROYECCIÓN'], ['Horizonte', hs], ['Desde', P.rows[0].label], ['Hasta', P.rows[P.H - 1].label], ['Demanda total proyectada', rd(P.total)], [`Promedio por ${P.U.s}`, rd(P.avg)]];
+  if (P.blocks.length && P.blocks[0].growth != null) r.push([`Variación del primer ${P.bname.toLowerCase()} proyectado vs el último histórico (%)`, +P.blocks[0].growth.toFixed(2)]);
+  r.push([], ['ALERTAS DE LA PROYECCIÓN']);
+  P.alerts.forEach(a => { r.push([`• ${{ err: 'Error', warn: 'Aviso', info: 'Nota', ok: 'Listo' }[a.l]}: ${a.t}`]); r.push([`   ${a.x}`]); if (a.do) r.push([`   Qué hacer: ${a.do}`]); });
+  if ($('notes').value.trim()) r.push([], ['OBSERVACIONES DEL GRUPO'], [$('notes').value.trim()]);
+  r.push([], ['NOTA METODOLÓGICA'], ['La banda de ≈95 % se calcula como pronóstico ± 1,96 × 1,25 × MAD y se ensancha con la raíz de la distancia respecto de la validación. Es una regla práctica y no incluye eventos futuros del proyecto.']);
+  add('Resumen', r, [62, 70]);
+  add('Proyección', [['N.º', 'Período', 'Pronóstico', 'Mínimo ≈95 %', 'Máximo ≈95 %', ...(P.B ? [P.bname] : [])], ...P.rows.map((q, k) => [q.n, q.label, Math.round(q.v * 100) / 100, Math.round(q.lo * 100) / 100, Math.round(q.hi * 100) / 100, ...(P.B ? [`${P.bname} ${Math.floor(k / P.B) + 1}`] : [])])], [6, 14, 14, 14, 14, 12]);
+  if (P.blocks.length) add(P.U.ppy ? 'Resumen anual' : 'Resumen por ciclo', [[P.bname, 'Desde', 'Hasta', 'Períodos', 'Total', `Promedio por ${P.U.s}`, `Variación vs ${P.bname.toLowerCase()} anterior (%)`], ...P.blocks.map(q => [q.name, q.from, q.to, q.len, Math.round(q.total * 100) / 100, Math.round(q.avg * 100) / 100, q.growth == null ? '' : +q.growth.toFixed(2)])], [18, 12, 12, 10, 14, 18, 26]);
+  add('Histórico y ajuste', [['Período', 'Real', `Ajuste (${c.name})`], ...y.map((v, i) => [S.labels[i], v, isFinite(c.fittedFull[i]) ? Math.round(c.fittedFull[i] * 100) / 100 : ''])], [14, 12, 40]);
+  add('Comparación de métodos', [['#', 'Método', 'Parámetros', 'MAD ajuste', hv ? `${crit} validación` : `${crit} ajuste`, 'Señal de rastreo', 'Usado en la proyección'], ...sel.sorted.map((q, i) => [i + 1, q.name, q.paramsTrain, rd(q.inS.mad), rd(critV(q)), rd(basisM(q).ts), q.id === c.id ? 'SÍ' : ''])], [4, 48, 34, 13, 18, 16, 22]);
+  const ok = await saveFile(`Proyeccion_${($('grp').value || 'grupo').replace(/[^\w-]+/g, '_')}_${P.H}${P.U.p}.xlsx`, new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: XLSX_MIME }));
+  $('projMsg').textContent = ok === true ? 'Informe de proyección generado.' : ok === 'declined' ? 'Descarga cancelada.' : 'No se pudo guardar el archivo.';
+};
 
 /* ---------- envío al docente (Google Apps Script) ---------- */
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -1159,7 +1365,7 @@ function buildPayload() {
     modelo: pk.name, parametros: pk.paramsFull, errorValidacion: critV(pk), madAjuste: pk.inS.mad, senalRastreo: basisM(pk).ts,
     totalPronostico: pk.future.reduce((a, v) => a + v, 0), justificacion: justText(), observaciones: $('notes').value.trim(),
     comparacion: sel.sorted.map((c, i) => ({ rank: i + 1, modelo: c.name, parametros: c.paramsTrain, madAjuste: c.inS.mad, madVal: hv ? c.val.mad : null, rmseVal: hv ? c.val.rmse : null, mapeVal: hv ? c.val.mape : null, ts: basisM(c).ts, elegido: c.id === pk.id })),
-    pronostico: pk.future.map((v, k) => ({ periodo: S.futLabels[k], valor: v, min: Math.max(0, v - 1.96 * sig), max: v + 1.96 * sig })),
+    pronostico: pk.future.map((v, k) => ({ periodo: S.futLabels[k], valor: v, min: Math.max(0, v - 1.96 * sigK(pk, k + 1)), max: v + 1.96 * sigK(pk, k + 1) })),
     datos: y.map((v, i) => ({ periodo: S.labels[i], valor: v }))
   };
 }
