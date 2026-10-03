@@ -156,24 +156,43 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
 
 #pChips .chip{font:inherit}#pChips .chip:hover{background:var(--primary-soft);border-color:var(--primary)}
 .psum{margin:12px 0 0;max-width:90ch}
+
+.wz-off{display:none!important}
+.top .wrap{flex-wrap:wrap;row-gap:0}
+.stepper{display:flex;gap:2px;margin-left:auto;overflow-x:auto;max-width:100%}
+.st{display:flex;align-items:center;gap:8px;border:0;border-bottom:3px solid transparent;background:none;padding:8px 12px;color:var(--muted);font-weight:500;white-space:nowrap;cursor:pointer}
+.st:hover:not(.locked){background:var(--surface2);color:var(--ink)}
+.st .stn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font:600 12.5px/1 var(--cond);color:var(--muted);background:var(--surface)}
+.st.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.st.active .stn{background:var(--primary);border-color:var(--primary);color:var(--primary-ink)}
+.st.done:not(.active) .stn{background:var(--good);border-color:var(--good);color:#fff}
+.st.done:not(.active){color:var(--ink)}
+.st.locked{opacity:.45;cursor:not-allowed}
+.st.guide{margin-left:10px;border-left:1px solid var(--line);padding-left:16px}
+.wzmsg{min-height:0;text-align:center;font-size:13px;color:var(--warn);padding:0 20px;font-weight:600}
+.wzmsg:not(:empty){padding:4px 20px 8px}
+.wz-nav{display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.hero-steps{font-size:14.5px!important;margin-top:14px!important}
+@media(max-width:860px){.stepper{margin-left:0;width:100%}.st{padding:8px 10px}.st .stl{font-size:13.5px}.st.guide{margin-left:0;padding-left:10px}.brand small{display:none}}
 </style>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <div class="brand">Simulador de pronósticos<small>Taller de proyecto</small></div>
-  <nav class="nav"><a href="#datos">Datos</a><a href="#config">Configuración</a><a href="#resultados">Resultados</a><a href="#proyeccion">Proyección</a><a href="#metodo">Guía</a></nav>
-</div></header>
+  <nav class="stepper" id="stepper" aria-label="Pasos del simulador">
+    <button type="button" class="st active" data-step="1" aria-current="step"><span class="stn">1</span><span class="stl">Datos</span></button>
+    <button type="button" class="st locked" data-step="2" aria-disabled="true"><span class="stn">2</span><span class="stl">Configuración</span></button>
+    <button type="button" class="st locked" data-step="3" aria-disabled="true"><span class="stn">3</span><span class="stl">Resultados</span></button>
+    <button type="button" class="st locked" data-step="4" aria-disabled="true"><span class="stn">4</span><span class="stl">Proyección</span></button>
+    <button type="button" class="st guide" data-step="guia"><span class="stl">Guía</span></button>
+  </nav>
+</div><div id="wzMsg" class="wzmsg" role="status"></div></header>
 
 <main class="wrap">
-<div class="hero">
+<div class="hero" id="hero">
   <h1>Cargue la demanda proyectada y deje que los modelos compitan</h1>
   <p>El sistema ajusta los modelos de la plantilla de pronósticos (promedio, promedio móvil, tendencia, suavización exponencial, Holt, tendencia con estacionalidad y Winters) más la tasa media de crecimiento, optimiza sus parámetros como lo haría el Solver, los compara con los mismos datos y redacta la justificación del método elegido.</p>
-  <div class="route" aria-label="Ruta rápida">
-    <div><b>1. Cargue</b>Su demanda proyectada, un valor por período.<i>Ej.: 36 meses de ventas estimadas del proyecto.</i></div>
-    <div><b>2. Configure</b>Ciclo, validación y horizonte. Lea las alertas.<i>Ej.: ciclo 12, validar 12, pronosticar 12.</i></div>
-    <div><b>3. Simule</b>Compare los modelos y revise sus alertas.<i>Ej.: gana Winters con MAD 2 200.</i></div>
-    <div><b>4. Proyecte</b>Elija el método, proyecte y descargue el informe en Excel.<i>Ej.: 10 meses o 10 años hacia adelante.</i></div>
-  </div>
+  <p class="hero-steps"><b>Avance paso a paso:</b> cada paso se habilita al completar el anterior. Cargue sus datos (1), defina la simulación (2), revise los resultados (3) y proyecte hacia adelante (4).</p>
 </div>
 
 <section class="step" id="datos">
@@ -206,9 +225,10 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
       </div>
     </div>
   </div>
+<div class="wz-nav"><span class="muted" id="next1Hint">Cargue su archivo para continuar.</span><button type="button" class="btn pri lg" id="btnNext1" disabled>Continuar a Configuración →</button></div>
 </section>
 
-<section class="step" id="config">
+<section class="step wz-off" id="config">
   <div class="step-h"><span class="n">2</span><h2>Definir la simulación</h2></div>
   <div class="card">
     <div class="row">
@@ -240,12 +260,13 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
       </div>
     </details>
     <div id="alertsPre" aria-live="polite"></div>
-    <div class="actions"><button class="btn pri lg" id="btnRun" disabled>Ejecutar simulación</button><span class="muted" id="runHint" style="align-self:center">Cargue datos para habilitar la simulación.</span></div>
+    <div class="actions"><button type="button" class="btn" id="btnBack2">← Volver a datos</button><button class="btn pri lg" id="btnRun" disabled>Ejecutar simulación</button><span class="muted" id="runHint" style="align-self:center">Cargue datos para habilitar la simulación.</span></div>
   </div>
 </section>
 
-<section class="step hidden" id="resultados">
+<section class="step hidden wz-off" id="resultados">
   <div class="step-h"><span class="n">3</span><h2>Resultados</h2></div>
+  <div class="alert warn hidden" id="staleNote"><div class="al-h"><span class="tag w">Aviso</span><b>La configuración cambió</b></div><p>Los resultados de abajo corresponden a la simulación anterior. Vuelva al paso 2 y pulse «Ejecutar simulación» para actualizarlos.</p><p><button type="button" class="linkbtn" id="btnStale">Ir a la configuración</button></p></div>
   <div id="verdict"></div>
   <div class="helppanel hidden" id="hp-res" role="region" aria-live="polite"></div>
   <div id="alertsPost"></div>
@@ -276,9 +297,10 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
     <div class="actions"><button class="btn pri" id="btnExport">Descargar informe en Excel</button><button class="btn hidden" id="btnSend">Enviar resultados al docente</button><span class="muted" id="expMsg" style="align-self:center"></span><span class="muted" id="sendMsg" style="align-self:center" role="status"></span><button type="button" class="helpbtn" data-help="informe" data-panel="hp-obs" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></div>
     <div class="helppanel hidden" id="hp-obs" role="region" aria-live="polite"></div>
   </div>
+<div class="wz-nav"><button type="button" class="btn" id="btnBack3">← Volver a configuración</button><button type="button" class="btn pri lg" id="btnNext3">Continuar a Proyección →</button></div>
 </section>
 
-<section class="step hidden" id="proyeccion">
+<section class="step hidden wz-off" id="proyeccion">
   <div class="step-h"><span class="n">4</span><h2>Proyectar hacia adelante</h2><button type="button" class="helpbtn" data-help="proy" data-panel="hp-proj" aria-label="Ayuda: ver nota y ejemplo" aria-expanded="false">i</button></div>
   <div class="helppanel hidden" id="hp-proj" role="region" aria-live="polite"></div>
   <div class="card">
@@ -305,8 +327,10 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
   <div class="tblwrap" style="max-height:380px;overflow:auto"><table id="projTbl" style="min-width:560px"></table></div>
   <div class="card" style="margin-top:16px"><div class="actions" style="margin-top:0"><button class="btn pri" id="btnExportProj">Descargar informe de proyección en Excel</button><span class="muted" id="projMsg" style="align-self:center" role="status"></span></div>
     <p class="muted" style="margin:10px 0 0;font-size:13px">El informe incluye el resumen, la proyección período a período, el resumen por año, el histórico con el ajuste del método y la comparación de métodos. Incluye también sus observaciones del paso 3.</p></div>
+  <div class="wz-nav"><button type="button" class="btn" id="btnBack4">← Volver a resultados</button><span class="muted">Puede cambiar el método o el horizonte y volver a descargar.</span></div>
 </section>
-<section class="step" id="metodo">
+
+<section class="step wz-off" id="metodo">
   <div class="step-h"><span class="n"></span><h2>Guía de los modelos y términos</h2></div>
   <div class="card">
     <p class="muted" style="margin-top:0">Abra cada punto para ver qué hace el modelo, cuándo conviene y un ejemplo con números simples.</p>
@@ -322,6 +346,7 @@ footer{margin-top:40px;color:var(--muted);font-size:13px;max-width:80ch}
     <details class="gl"><summary>Modelos «optimizados» y «Solver completo»</summary><div><p><b>Idea:</b> el sistema busca los valores de α, β, γ o N que minimizan el MAD de ajuste, como el Solver de Excel. El «Solver completo» también reestima nivel, tendencia e índices iniciales.</p><p><b>Cuidado:</b> más libertad significa más riesgo de sobreajuste; por eso se decide con la validación.</p><p><b>Ejemplo:</b> una SES optimizada que elige α = 1,00 solo copia el último dato: ajusta bien el pasado, pero es una señal de alerta.</p></div></details>
     <details class="gl"><summary>Términos: MAD, RMSE, MAPE, señal de rastreo, sobreajuste</summary><div><p><b>MAD:</b> error absoluto promedio. Reales 100, 120, 90 y pronósticos 110, 110, 100: errores 10, 10, 10, MAD = 10.</p><p><b>RMSE:</b> castiga más los errores grandes. Errores 0, 0, 30: MAD = 10 pero RMSE = 17,3.</p><p><b>MAPE:</b> error en %. Real 200 y pronóstico 180: error de 10 %.</p><p><b>Señal de rastreo:</b> suma de errores ÷ MAD. Entre −4 y +4 es aceptable; fuera indica que el modelo se equivoca siempre hacia el mismo lado.</p><p><b>Sobreajuste:</b> el modelo memoriza el pasado y falla con datos nuevos. Ajuste 872 y validación 2 246 es un caso típico.</p></div></details>
   </div>
+<div class="wz-nav"><button type="button" class="btn" id="btnBackG">← Volver al paso anterior</button></div>
 </section>
 <footer>Los resultados dependen de los datos cargados y de la validación elegida. Ninguna información se guarda en un servidor: todo se calcula en su navegador.</footer>
 </main>
@@ -721,7 +746,7 @@ function setData(vals, labs, dts, skipped) {
   S.step = st; S.dates = allDates ? dts : null;
   S.labels = vals.map((_, i) => allDates ? fmtDate(dts[i], st ? st.k : 'm') : (labs[i] != null ? String(labs[i]) : `P${i + 1}`));
   S.skipped = skipped;
-  if (n < 8) { msg(`Se leyeron solo ${n} datos. Se necesitan al menos 8 para simular.`, 'err'); S.y = []; renderPreview(); updateRun(); refreshAlerts(); return; }
+  if (n < 8) { msg(`Se leyeron solo ${n} datos. Se necesitan al menos 8 para simular.`, 'err'); S.y = []; renderPreview(); updateRun(); refreshAlerts(); wizDataChanged(); return; }
   msg(`${n} datos leídos de «${esc(S.srcName)}». Revise las alertas del paso 2 antes de simular.`, 'ok');
   // sugerir ciclo
   let m = 12;
@@ -729,7 +754,7 @@ function setData(vals, labs, dts, skipped) {
   setCycle(m);
   S.autoM = st ? m : null;
   autoHold();
-  refreshAlerts(); renderPreview(); updateRun();
+  refreshAlerts(); renderPreview(); updateRun(); wizDataChanged();
 }
 
 function setCycle(m) {
@@ -766,7 +791,7 @@ $('drop').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.prevent
 ['dragenter', 'dragover'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.add('on'); }));
 ['dragleave', 'drop'].forEach(ev => $('drop').addEventListener(ev, e => { e.preventDefault(); $('drop').classList.remove('on'); }));
 $('drop').addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
-$('file').onchange = e => { if (e.target.files[0]) readFile(e.target.files[0]); };
+$('file').onchange = e => { const f = e.target.files[0]; if (f) { readFile(f); e.target.value = ''; } };
 function readFile(f) { const r = new FileReader(); r.onload = () => loadWorkbook(r.result, f.name); r.readAsArrayBuffer(f); }
 $('selSheet').onchange = readSheet; $('selDem').onchange = applyMapping; $('selLab').onchange = applyMapping;
 $('cycle').onchange = () => { $('cycleN').classList.toggle('hidden', $('cycle').value !== '0'); if (S.y.length) autoHold(); };
@@ -808,7 +833,8 @@ function run() {
   S.just = buildJust();
   $('resultados').classList.remove('hidden');
   renderVerdict(); renderTable(); renderChips(); drawMain(); drawResid(); renderFc(); renderJust(); renderPostAlerts(); initProjection();
-  $('resultados').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('staleNote').classList.add('hidden');
+  wizGo(3);
 }
 
 function makeFuture(H) {
@@ -1344,6 +1370,7 @@ $('btnExportProj').onclick = async () => {
   add('Histórico y ajuste', [['Período', 'Real', `Ajuste (${c.name})`], ...y.map((v, i) => [S.labels[i], v, isFinite(c.fittedFull[i]) ? Math.round(c.fittedFull[i] * 100) / 100 : ''])], [14, 12, 40]);
   add('Comparación de métodos', [['#', 'Método', 'Parámetros', 'MAD ajuste', hv ? `${crit} validación` : `${crit} ajuste`, 'Señal de rastreo', 'Usado en la proyección'], ...sel.sorted.map((q, i) => [i + 1, q.name, q.paramsTrain, rd(q.inS.mad), rd(critV(q)), rd(basisM(q).ts), q.id === c.id ? 'SÍ' : ''])], [4, 48, 34, 13, 18, 16, 22]);
   const ok = await saveFile(`Proyeccion_${($('grp').value || 'grupo').replace(/[^\w-]+/g, '_')}_${P.H}${P.U.p}.xlsx`, new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: XLSX_MIME }));
+  if (ok === true) { WZ.exported = true; wizRefresh(); }
   $('projMsg').textContent = ok === true ? 'Informe de proyección generado.' : ok === 'declined' ? 'Descarga cancelada.' : 'No se pudo guardar el archivo.';
 };
 
@@ -1385,6 +1412,68 @@ $('btnSend').onclick = async () => {
   }
   b.disabled = false;
 };
+
+/* ===================== ASISTENTE POR PASOS ===================== */
+const WZ = { cur: 1, last: 1, visited3: false, exported: false };
+const WZ_SEC = { 1: 'datos', 2: 'config', 3: 'resultados', 4: 'proyeccion', guia: 'metodo' };
+function wizOK(n) { return n === 1 || n === 'guia' || (n === 2 && S.y.length >= 8) || ((n === 3 || n === 4) && !!S.sel); }
+const wizHint = n => n === 2 ? 'Primero cargue su demanda en el paso 1.' : 'Primero ejecute la simulación en el paso 2.';
+function wizRefresh() {
+  const done = { 1: S.y.length >= 8, 2: !!S.sel, 3: !!S.sel && WZ.visited3, 4: WZ.exported };
+  document.querySelectorAll('#stepper .st').forEach(b => {
+    const n = b.dataset.step === 'guia' ? 'guia' : +b.dataset.step, ok = wizOK(n);
+    b.classList.toggle('active', WZ.cur === n); b.classList.toggle('locked', !ok);
+    b.setAttribute('aria-disabled', ok ? 'false' : 'true'); b.title = ok ? '' : wizHint(n);
+    if (WZ.cur === n) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+    if (n !== 'guia') { b.classList.toggle('done', !!done[n]); b.querySelector('.stn').textContent = (done[n] && WZ.cur !== n) ? '✓' : n; }
+  });
+  const ok1 = S.y.length >= 8; $('btnNext1').disabled = !ok1;
+  $('next1Hint').textContent = ok1 ? `${S.y.length} datos listos.` : 'Cargue su archivo para continuar.';
+}
+function wizGo(n, silent) {
+  if (!wizOK(n)) return;
+  if (n !== 'guia') WZ.last = n;
+  WZ.cur = n; if (n === 3) WZ.visited3 = true;
+  if (S.sel) { $('resultados').classList.remove('hidden'); $('proyeccion').classList.remove('hidden'); }
+  Object.keys(WZ_SEC).forEach(k => $(WZ_SEC[k]).classList.toggle('wz-off', String(k) !== String(n)));
+  $('hero').classList.toggle('wz-off', n !== 1);
+  $('wzMsg').textContent = '';
+  wizRefresh();
+  if (!silent) { try { history.pushState({ s: n }, '', '#paso-' + n); } catch (e) { } window.scrollTo({ top: 0, behavior: 'smooth' }); }
+}
+function wizDataChanged() {
+  if (S.sel) {
+    S.sel = null; S.cands = []; S.proj = null; WZ.visited3 = false; WZ.exported = false;
+    $('resultados').classList.add('hidden'); $('proyeccion').classList.add('hidden');
+    ['verdict', 'alertsPost', 'alertsProj'].forEach(i => $(i).innerHTML = '');
+    $('sendMsg').textContent = ''; $('projMsg').textContent = '';
+  }
+  wizRefresh();
+}
+let wzTimer;
+$('stepper').onclick = e => {
+  const b = e.target.closest('.st'); if (!b) return;
+  const n = b.dataset.step === 'guia' ? 'guia' : +b.dataset.step;
+  if (!wizOK(n)) { $('wzMsg').textContent = wizHint(n); clearTimeout(wzTimer); wzTimer = setTimeout(() => $('wzMsg').textContent = '', 3500); return; }
+  wizGo(n);
+};
+$('btnNext1').onclick = () => wizGo(2);
+$('btnBack2').onclick = () => wizGo(1);
+$('btnBack3').onclick = () => wizGo(2);
+$('btnNext3').onclick = () => wizGo(4);
+$('btnBack4').onclick = () => wizGo(3);
+$('btnBackG').onclick = () => wizGo(WZ.last || 1);
+$('btnStale').onclick = () => wizGo(2);
+window.addEventListener('popstate', () => {
+  const m = (location.hash.match(/paso-(\w+)/) || [])[1], n = m === 'guia' ? 'guia' : (+m || 1);
+  wizGo(wizOK(n) ? n : 1, true);
+});
+['cycle', 'cycleN', 'hold', 'crit', 'pars', 'variant', 'manOn', 'manType', 'rAl', 'rBe', 'rGa', 'rN'].forEach(id => {
+  const f = () => { if (S.sel) $('staleNote').classList.remove('hidden'); };
+  $(id).addEventListener('input', f); $(id).addEventListener('change', f);
+});
+
+wizGo(1, true);
 
 </script>
 </body>
