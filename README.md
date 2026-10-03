@@ -61,6 +61,21 @@ const CONFIG = { ENDPOINT: 'https://script.google.com/macros/s/XXXXXXXX/exec', T
 
 Si algo falla en el paso 4, ejecute `probarConexion` para verificar que la clave funciona: debe listar sus bases en el registro de ejecución.
 
+## Avance por pasos
+
+La página funciona como un asistente: muestra un paso a la vez y habilita el siguiente solo al completar el anterior.
+
+| Paso | Se habilita cuando | Qué hace el grupo |
+|---|---|---|
+| 1 Datos | siempre | Escribe grupo y proyecto, y carga su archivo |
+| 2 Configuración | hay al menos 8 datos cargados | Define ciclo, validación y criterio, y revisa las alertas |
+| 3 Resultados | se ejecutó la simulación | Revisa el ranking, el gráfico y la justificación, y descarga o envía |
+| 4 Proyección | se ejecutó la simulación | Elige el método y el horizonte, y descarga el informe |
+| Guía | siempre | Consulta modelos y términos con ejemplos |
+
+La barra superior marca el paso activo, muestra con una marca verde los completados y deja atenuados los bloqueados.
+Si el grupo carga otros datos, los pasos 3 y 4 se bloquean hasta volver a simular. Si cambia la configuración después de simular, el paso 3 avisa que los resultados están desactualizados.
+
 ## Notas y alertas dentro de la página
 
 Para que los estudiantes se guíen solos, la página incluye:
